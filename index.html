@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOMBA &mdash; Resgate em Alto-Mar (TRS-Color, 1986)</title>
+<style>
+  :root{
+    --bg:#0a1f12;
+    --panel:#0e2b18;
+    --ink:#36e06a;       /* fosforo verde */
+    --ink-dim:#1f8a40;
+    --warn:#ffd23f;
+    --danger:#ff5a4d;
+    --line:#13502b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#000;color:var(--ink);
+    font-family:"Courier New",ui-monospace,Menlo,Consolas,monospace;}
+  body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;
+    background:radial-gradient(ellipse at center,#0a1f12 0%,#04110a 70%,#000 100%);}
+  #crt{
+    width:min(880px,100%);background:var(--bg);border:3px solid var(--line);
+    border-radius:14px;padding:18px 20px 22px;position:relative;overflow:hidden;
+    box-shadow:0 0 0 6px #051208,0 0 40px rgba(54,224,106,.15),inset 0 0 60px rgba(0,0,0,.6);
+  }
+  /* scanlines */
+  #crt::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.18) 3px);
+    border-radius:14px;}
+  header{display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:10px;flex-wrap:wrap;gap:6px}
+  h1{font-size:22px;letter-spacing:3px;margin:0;text-shadow:0 0 8px rgba(54,224,106,.5)}
+  .sub{font-size:11px;color:var(--ink-dim);letter-spacing:1px}
+  .hud{display:flex;gap:18px;font-size:13px;flex-wrap:wrap}
+  .hud b{color:var(--warn)}
+  .hud .t{color:var(--ink)}
+  .hud .t.low{color:var(--danger);animation:blink .8s steps(1) infinite}
+  @keyframes blink{50%{opacity:.35}}
+  #stage{position:relative;min-height:430px}
+  .screen{display:none}
+  .screen.active{display:block}
+
+  /* ---- title / generic text screens ---- */
+  .center{text-align:center}
+  pre.art{color:var(--ink);font-size:12px;line-height:1.15;margin:6px 0;white-space:pre;overflow-x:auto;
+    text-shadow:0 0 6px rgba(54,224,106,.35)}
+  p.lead{font-size:14px;line-height:1.55;max-width:640px;margin:10px auto}
+  .muted{color:var(--ink-dim)}
+  .btn{cursor:pointer;background:transparent;color:var(--ink);border:2px solid var(--ink-dim);
+    border-radius:8px;padding:9px 16px;font-family:inherit;font-size:14px;letter-spacing:1px;
+    transition:all .12s;text-transform:uppercase}
+  .btn:hover{border-color:var(--ink);background:rgba(54,224,106,.1);box-shadow:0 0 14px rgba(54,224,106,.25)}
+  .btn:active{transform:translateY(1px)}
+  .btnrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+
+  /* ---- bomb select ---- */
+  .bombgrid{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:18px 0}
+  .bombcard{width:118px;cursor:pointer;border:2px solid var(--ink-dim);border-radius:10px;
+    padding:12px 8px;text-align:center;transition:all .12s;background:rgba(0,0,0,.2)}
+  .bombcard:hover:not(.done){border-color:var(--ink);box-shadow:0 0 14px rgba(54,224,106,.25)}
+  .bombcard .num{font-size:30px;font-weight:bold}
+  .bombcard .st{font-size:11px;margin-top:4px;letter-spacing:1px}
+  .bombcard.done{opacity:.5;cursor:not-allowed}
+  .bombcard.disarmed{border-color:var(--ink);color:var(--ink)}
+  .bombcard.disarmed .st{color:var(--ink)}
+  .bombcard.exploded{border-color:var(--danger);color:var(--danger)}
+  .bombcard.exploded .st{color:var(--danger)}
+
+  /* ---- defuse panel ---- */
+  #defuse .wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+  #panel{flex:1 1 380px;min-width:320px;border:2px solid var(--line);border-radius:10px;
+    padding:10px;background:#06180d}
+  .paneltitle{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-dim);
+    border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;letter-spacing:1px}
+  .wire{display:flex;align-items:center;height:30px;border-bottom:1px dashed rgba(31,138,64,.25);
+    cursor:pointer;position:relative}
+  .wire:last-child{border-bottom:none}
+  .wire .label{width:34px;font-size:13px;color:var(--ink-dim);text-align:right;padding-right:8px;flex:none}
+  .wire .track{flex:1;height:8px;border-radius:4px;position:relative;margin-right:6px}
+  .wire .track .seg{position:absolute;top:0;bottom:0;border-radius:4px}
+  .wire .track .seg.left{left:0;width:44%}
+  .wire .track .seg.right{right:0;width:44%}
+  .wire .track .gap{position:absolute;left:44%;right:44%;top:-3px;bottom:-3px}
+  .wire.cut .track .seg.left{width:30%}
+  .wire.cut .track .seg.right{width:30%}
+  .wire .pliers{width:26px;flex:none;text-align:center;font-size:16px;opacity:0}
+  .wire.cursor{background:rgba(54,224,106,.10)}
+  .wire.cursor .pliers{opacity:1}
+  .wire.cursor .label{color:var(--warn)}
+  .wire .flag{position:absolute;right:34px;font-size:10px;color:var(--danger);letter-spacing:1px;
+    text-shadow:0 0 6px rgba(255,90,77,.5)}
+  .wire.cut{opacity:.85}
+  .wire.cut .label{text-decoration:line-through}
+
+  #side{flex:1 1 200px;min-width:220px}
+  .ship{border:2px solid var(--line);border-radius:10px;padding:10px;background:#06180d;margin-bottom:10px}
+  .ship pre{font-size:9px;line-height:1.1;margin:0;color:var(--ink)}
+  .ctrls{font-size:12px;line-height:1.9}
+  .ctrls .k{display:inline-block;min-width:54px;color:var(--warn);font-weight:bold}
+  .msg{min-height:38px;border:2px solid var(--line);border-radius:8px;padding:8px;margin-top:10px;
+    font-size:13px;background:#06180d}
+  .msg.alert{border-color:var(--danger);color:var(--danger);text-shadow:0 0 6px rgba(255,90,77,.4)}
+  .msg.good{border-color:var(--ink);color:var(--ink)}
+  .msg.info{border-color:var(--warn);color:var(--warn)}
+
+  /* report */
+  .report{border:2px solid var(--line);border-radius:10px;padding:14px 18px;max-width:560px;margin:10px auto;
+    font-size:13px;line-height:1.8;background:#06180d}
+  .report h3{margin:0 0 8px;letter-spacing:2px;text-align:center}
+  .report .row{display:flex;justify-content:space-between;border-bottom:1px dotted var(--line);padding:2px 0}
+  .report ul{margin:6px 0 0;padding-left:18px}
+
+  /* modal */
+  .modal{position:absolute;inset:0;background:rgba(2,10,5,.92);display:none;
+    align-items:center;justify-content:center;z-index:20;border-radius:10px}
+  .modal.active{display:flex}
+  .modalbox{border:2px solid var(--ink-dim);border-radius:10px;padding:20px;max-width:420px;width:90%;
+    background:var(--panel);text-align:center}
+  .modalbox input{font-family:inherit;font-size:18px;text-align:center;background:#02100a;color:var(--ink);
+    border:2px solid var(--ink-dim);border-radius:6px;padding:8px;width:160px;margin:10px 0}
+  .modalbox input:focus{outline:none;border-color:var(--ink)}
+
+  footer{margin-top:14px;border-top:1px solid var(--line);padding-top:8px;font-size:10px;
+    color:var(--ink-dim);text-align:center;letter-spacing:1px}
+  .big{font-size:20px;letter-spacing:2px}
+  .flash-danger{animation:flashred .12s steps(1) 8}
+  @keyframes flashred{50%{background:#2a0807;box-shadow:inset 0 0 80px rgba(255,90,77,.4)}}
+</style>
+</head>
+<body>
+<div id="crt">
+  <header>
+    <div>
+      <h1>B O M B A</h1>
+      <div class="sub">RESGATE EM ALTO-MAR &middot; VERSÃO TRS-COLOR (1986) &middot; H. BEZERRA &amp; J. AMORIM</div>
+    </div>
+    <div class="hud" id="hud" style="display:none">
+      <div>TEMPO <span class="t" id="hudTime">5:00</span></div>
+      <div>$ <b id="hudMoney">0</b></div>
+      <div>DESARM. <b id="hudDis">0</b>/5</div>
+      <div>EXPLOD. <b id="hudExp">0</b></div>
+    </div>
+  </header>
+
+  <div id="stage">
+
+    <!-- TITLE -->
+    <section class="screen active center" id="title">
+      <pre class="art">       _____________________
+      /   BRITÂNIA  o o o   \____
+   __/__________________________\__
+   \   |  |  |  |  |  |  |  |  |   /
+~~~~\__|__|__|__|__|__|__|__|__|__/~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</pre>
+      <p class="lead">Um grupo de terroristas espalhou <b>cinco bombas</b> no transatlântico inglês
+      <b>Britânia</b>. Você, perito em desarmar artefatos explosivos formado em engenharia bélica,
+      foi o escolhido para salvar a real embarcação do naufrágio.</p>
+      <p class="lead muted">Você tem <b>5 minutos</b>. Boa sorte.</p>
+      <div class="btnrow">
+        <button class="btn" id="startBtn">Iniciar resgate</button>
+        <button class="btn" id="helpBtn">Instruções</button>
+      </div>
+    </section>
+
+    <!-- HELP -->
+    <section class="screen center" id="help">
+      <h2 style="letter-spacing:2px">COMO JOGAR</h2>
+      <p class="lead" style="text-align:left">
+        Cada bomba possui <b>10 fios</b>:<br>
+        &middot; <b>2 fios-armadilha</b> — cortar qualquer um faz a bomba <span style="color:var(--danger)">explodir</span>.<br>
+        &middot; <b>3 fios-ativos</b> — corte os três para <span style="color:var(--ink)">desarmar</span>.<br>
+        &middot; <b>1 fio-conjugador</b> — desliga a conjugação do grupo (único fio cuja natureza é avisada).<br>
+        &middot; <b>4 fios-neutros</b> — não têm função.
+      </p>
+      <p class="lead" style="text-align:left">
+        As bombas <b>1 e 2</b> são conjugadas entre si; as bombas <b>3, 4 e 5</b> também. Bombas conjugadas
+        têm a <i>mesma</i> fiação — descobrir uma revela as outras do grupo, até que você corte o fio-conjugador.
+      </p>
+      <p class="lead" style="text-align:left">
+        O navio <b>afunda</b> se: a bomba <b>3</b> explodir; a bomba <b>2</b> e qualquer outra explodirem;
+        ou <b>três</b> bombas quaisquer explodirem. Se o tempo acabar com alguma bomba restante, a embarcação vai a pique.
+      </p>
+      <p class="lead" style="text-align:left">
+        <b>Controles:</b> setas <b>↑ / ↓</b> movem o alicate; <b>←</b> corta o fio.
+        <b>R</b> relatório &middot; <b>S</b> falar com o informante (suborno) &middot; <b>D</b> desistir.
+      </p>
+      <div class="btnrow"><button class="btn" id="helpBack">Voltar</button></div>
+    </section>
+
+    <!-- SELECT BOMB -->
+    <section class="screen center" id="select">
+      <h2 style="letter-spacing:2px">DIGA QUAL A BOMBA QUE VOCÊ QUER MEXAR</h2>
+      <div class="bombgrid" id="bombGrid"></div>
+      <p class="muted" id="selectHint" style="font-size:12px"></p>
+    </section>
+
+    <!-- DEFUSE -->
+    <section class="screen" id="defuse">
+      <div class="wrap">
+        <div id="panel">
+          <div class="paneltitle"><span id="panelTitle">BOMBA Nº ?</span><span id="panelCut">CORTADOS: 0</span></div>
+          <div id="wires"></div>
+        </div>
+        <div id="side">
+          <div class="ship">
+            <pre> .  .  .  .  .
+[BRITÂNIA====]
+ \__________/
+~~~~~~~~~~~~~~~</pre>
+          </div>
+          <div class="ctrls">
+            <div><span class="k">↑ / ↓</span> mover alicate</div>
+            <div><span class="k">←</span> cortar fio</div>
+            <div><span class="k">R</span> relatório</div>
+            <div><span class="k">S</span> informante</div>
+            <div><span class="k">D</span> desistir</div>
+          </div>
+          <div class="btnrow" style="margin-top:10px">
+            <button class="btn" data-act="report" style="padding:6px 10px;font-size:12px">R</button>
+            <button class="btn" data-act="bribe" style="padding:6px 10px;font-size:12px">S</button>
+            <button class="btn" data-act="quit" style="padding:6px 10px;font-size:12px">D</button>
+          </div>
+          <div class="msg info" id="msg">Escolha um fio e corte com &larr;</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORT -->
+    <section class="screen center" id="reportScreen">
+      <div class="report" id="reportBody"></div>
+      <div class="btnrow"><button class="btn" id="reportBack">&lt;ENTER&gt;</button></div>
+    </section>
+
+    <!-- GAME OVER -->
+    <section class="screen center" id="over">
+      <pre class="art" id="overArt"></pre>
+      <div id="overText"></div>
+      <div class="btnrow"><button class="btn" id="againBtn">Outra? (S/N)</button></div>
+    </section>
+
+  </div>
+
+  <!-- bribe modal -->
+  <div class="modal" id="bribeModal">
+    <div class="modalbox">
+      <div id="bribeText"></div>
+      <input type="number" id="bribeInput" min="0" placeholder="quantia">
+      <div class="btnrow">
+        <button class="btn" id="bribeOffer">Oferecer</button>
+        <button class="btn" id="bribeCancel">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- quit modal -->
+  <div class="modal" id="quitModal">
+    <div class="modalbox">
+      <div>VOCÊ QUER MESMO DESISTIR? (S/N)</div>
+      <div class="btnrow">
+        <button class="btn" id="quitYes">Sim (S)</button>
+        <button class="btn" id="quitNo">Não (N)</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Reconstrução fiel da listagem em Extended Color BASIC publicada na revista Micro Sistemas, maio/1986.</footer>
+</div>
+
+<script>
+"use strict";
+(function(){
+  // ---------- constantes do jogo ----------
+  var TIME_LIMIT = 300;        // 5 minutos (TIMER>=18000 -> 18000/3600 = 5 min no CoCo)
+  var REWARD_NEUTRAL = 35;     // Q=Q+35  (linha 440)
+  var REWARD_ACTIVE  = 200;    // Q=Q+200 (linha 450)
+  var DISARM_BONUS   = {1:4000, 2:7000, 3:10000, 4:3000, 5:3000}; // linha 450
+  var EXPLODE_PENALTY= {1:497, 2:321, 3:109, 4:755, 5:600};       // linha 670
+  // mensagens de avaria por bomba (linhas 110/120/140/160/170 + ON N GOSUB linha 680)
+  var DAMAGE = {
+    1:"FUMAÇA NO SALÃO DE JOGOS",
+    2:"PANE NA CASA DAS MÁQUINAS",
+    3:"O NAVIO ESTÁ AFUNDANDO",
+    4:"HÁ FERIDOS NA ENFERMARIA",
+    5:"ESTRAGOS NO CONVÉS"
+  };
+  var WIRE_COLORS = ["#ff5a4d","#ffd23f","#4db8ff","#36e06a","#ff8a3d",
+                     "#c97bff","#ffffff","#6bd4c0","#ff6fae","#8fd14f"];
+
+  // ---------- estado ----------
+  var G = null;     // estado da partida
+  var timerHandle = null;
+
+  function groupOf(n){ return n<=2 ? "A" : "B"; }
+  function membersOf(g){ return g==="A" ? [1,2] : [3,4,5]; }
+
+  // Gera um "layout": atribui tipos às 10 posições (0..9).
+  // 2 armadilha, 3 ativo, 1 conjugador, 4 neutro -> 6 posições especiais distintas (DIM B(5,5) = B(n,0..5))
+  function makeLayout(){
+    var pos=[0,1,2,3,4,5,6,7,8,9];
+    for(var i=pos.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pos[i];pos[i]=pos[j];pos[j]=t;}
+    return {
+      traps:[pos[0],pos[1]],          // B(n,0),B(n,1)
+      actives:[pos[2],pos[3],pos[4]], // B(n,2),B(n,3),B(n,4)
+      conj:pos[5]                     // B(n,5)
+    };
+  }
+  function colorsForLayout(){
+    var c=WIRE_COLORS.slice();
+    for(var i=c.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=c[i];c[i]=c[j];c[j]=t;}
+    return c;
+  }
+
+  function newGame(){
+    if(timerHandle){clearInterval(timerHandle);timerHandle=null;}
+    var layA=makeLayout(), layB=makeLayout();
+    var bombs={};
+    for(var n=1;n<=5;n++){
+      bombs[n]={
+        n:n,
+        layout: groupOf(n)==="A" ? layA : layB,
+        conjugated:true,
+        status:"intact",        // intact | disarmed | exploded
+        cut:{},                 // posições cortadas
+        activesCut:0,
+        revealed:null,          // posição de armadilha revelada pelo informante
+        colors:colorsForLayout()
+      };
+    }
+    G={
+      bombs:bombs,
+      money:0,
+      disarmed:[], exploded:[],
+      worked:{},                // bombas já escolhidas/trabalhadas
+      bribeUsed:false,          // suborno bem-sucedido (R$="SIM")
+      reports:0,
+      damage:{},                // M$()
+      current:null,
+      cursor:9,                 // FIO começa em 9 (linha 400)
+      timeLeft:TIME_LIMIT,
+      started:false,
+      finished:false
+    };
+  }
+
+  // ---------- helpers de tela ----------
+  function show(id){
+    var s=document.querySelectorAll(".screen");
+    for(var i=0;i<s.length;i++) s[i].classList.remove("active");
+    document.getElementById(id).classList.add("active");
+  }
+  function $(id){return document.getElementById(id);}
+
+  function updateHud(){
+    $("hud").style.display="flex";
+    var m=Math.max(0,Math.floor(G.timeLeft/60)), s=Math.max(0,G.timeLeft%60);
+    var el=$("hudTime");
+    el.textContent=m+":"+(s<10?"0":"")+s;
+    el.className="t"+(G.timeLeft<=30?" low":"");
+    $("hudMoney").textContent=Math.round(G.money);
+    $("hudDis").textContent=G.disarmed.length;
+    $("hudExp").textContent=G.exploded.length;
+  }
+
+  function startTimer(){
+    if(timerHandle) clearInterval(timerHandle);
+    timerHandle=setInterval(function(){
+      if(G.finished) return;
+      G.timeLeft--;
+      updateHud();
+      if(G.timeLeft<=0){
+        clearInterval(timerHandle); timerHandle=null;
+        sink("O TEMPO ACABOU E AINDA HAVIA BOMBAS A BORDO.");
+      }
+    },1000);
+  }
+
+  // ---------- fluxo ----------
+  function beginGame(){
+    newGame();
+    attachGroups();
+    G.started=true;
+    updateHud();
+    startTimer();
+    gotoSelect();
+  }
+
+  function gotoSelect(){
+    G.current=null;
+    var grid=$("bombGrid"); grid.innerHTML="";
+    for(var n=1;n<=5;n++){
+      (function(n){
+        var b=G.bombs[n];
+        var card=document.createElement("div");
+        card.className="bombcard";
+        var st="INTACTA";
+        if(b.status==="disarmed"){card.classList.add("done","disarmed");st="DESARMADA";}
+        else if(b.status==="exploded"){card.classList.add("done","exploded");st="EXPLODIU";}
+        card.innerHTML='<div class="num">'+n+'</div><div class="st">'+st+'</div>';
+        if(b.status==="intact"){
+          card.addEventListener("click",function(){chooseBomb(n);});
+        }else{
+          card.classList.add("done");
+        }
+        grid.appendChild(card);
+      })(n);
+    }
+    $("selectHint").textContent="Clique numa bomba intacta (ou tecle 1-5).";
+    show("select");
+  }
+
+  function chooseBomb(n){
+    var b=G.bombs[n];
+    if(!b || b.status!=="intact") return;
+    G.current=n;
+    G.worked[n]=true;
+    G.cursor=9;
+    renderPanel();
+    show("defuse");
+    setMsg("Trabalhando na bomba nº "+n+". Mova o alicate e corte com ←.","info");
+  }
+
+  function wireType(b,pos){
+    var L=b.layout;
+    if(L.traps.indexOf(pos)>=0) return "trap";
+    if(L.actives.indexOf(pos)>=0) return "active";
+    if(L.conj===pos) return "conj";
+    return "neutral";
+  }
+
+  function renderPanel(){
+    var b=G.bombs[G.current];
+    $("panelTitle").textContent="BOMBA Nº "+G.current;
+    var nCut=Object.keys(b.cut).length;
+    $("panelCut").textContent="CORTADOS: "+nCut+"   ATIVOS: "+b.activesCut+"/3";
+    var box=$("wires"); box.innerHTML="";
+    for(var p=0;p<10;p++){
+      (function(p){
+        var w=document.createElement("div");
+        w.className="wire"+(b.cut[p]?" cut":"")+(p===G.cursor?" cursor":"");
+        var col=b.colors[p];
+        var flag = (b.revealed===p && !b.cut[p]) ? '<span class="flag">⚠ ARMADILHA</span>' : '';
+        w.innerHTML=
+          '<span class="label">'+(p+1)+'</span>'+
+          '<span class="track">'+
+            '<span class="seg left" style="background:'+col+'"></span>'+
+            '<span class="seg right" style="background:'+col+'"></span>'+
+            (b.cut[p]?'<span class="gap"></span>':'')+
+          '</span>'+
+          flag+
+          '<span class="pliers">✂</span>';
+        w.addEventListener("click",function(){G.cursor=p;renderPanel();});
+        box.appendChild(w);
+      })(p);
+    }
+  }
+
+  function setMsg(t,cls){
+    var m=$("msg");
+    m.className="msg "+(cls||"info");
+    m.textContent=t;
+  }
+
+  function moveCursor(d){
+    if(G.current==null) return;
+    G.cursor+=d;
+    if(G.cursor>9) G.cursor=0;        // linha 90: FIO=10 -> 0
+    if(G.cursor<0) G.cursor=9;        // FIO=-1 -> 9
+    renderPanel();
+  }
+
+  function cutWire(){
+    if(G.current==null) return;
+    var b=G.bombs[G.current];
+    var p=G.cursor;
+    if(b.cut[p]){ setMsg("Esse fio já foi cortado.","info"); return; }
+    b.cut[p]=true;
+    var type=wireType(b,p);
+
+    if(type==="trap"){
+      renderPanel();
+      explodeBomb(G.current);
+      return;
+    }
+    if(type==="active"){
+      G.money+=REWARD_ACTIVE;
+      b.activesCut++;
+      renderPanel(); updateHud();
+      if(b.activesCut>=3){
+        disarmBomb(G.current);
+      }else{
+        setMsg("Fio cortado. A bomba continua armada.","info");
+      }
+      return;
+    }
+    if(type==="conj"){
+      // único caso em que a natureza do fio é avisada
+      cutConjugator(b);
+      renderPanel();
+      setMsg("FIO CONJUGADOR CORTADO! As outras bombas do grupo "+b.group+" foram renumeradas.","info");
+      return;
+    }
+    // neutro
+    G.money+=REWARD_NEUTRAL;
+    renderPanel(); updateHud();
+    setMsg("Fio cortado. A bomba continua armada.","info");
+  }
+
+  function cutConjugator(b){
+    b.conjugated=false;
+    // dá a esta bomba um layout próprio (cópia do atual)
+    b.layout={traps:b.layout.traps.slice(),actives:b.layout.actives.slice(),conj:b.layout.conj};
+    // demais bombas conjugadas e intactas do grupo são renumeradas (novo layout, iguais entre si)
+    var sibs=membersOf(groupOf(b.n)).filter(function(x){
+      var ob=G.bombs[x];
+      return x!==b.n && ob.conjugated && ob.status==="intact";
+    });
+    if(sibs.length){
+      var nl=makeLayout();
+      sibs.forEach(function(x){ G.bombs[x].layout=nl; });
+    }
+  }
+
+  function disarmBomb(n){
+    var b=G.bombs[n];
+    b.status="disarmed";
+    G.disarmed.push(n);
+    G.money+=DISARM_BONUS[n];
+    updateHud();
+    if(G.disarmed.length+G.exploded.length>=5){ winGame(); return; }
+    flashThen("good","BOMBA Nº "+n+" DESARMADA! Parabéns, continue tentando.",gotoSelect);
+  }
+
+  function explodeBomb(n){
+    var b=G.bombs[n];
+    b.status="exploded";
+    G.exploded.push(n);
+    G.money-=EXPLODE_PENALTY[n];
+    if(G.money<0) G.money=0;
+    G.damage[n]=DAMAGE[n];
+    updateHud();
+
+    // efeito visual
+    var crt=$("crt"); crt.classList.remove("flash-danger"); void crt.offsetWidth; crt.classList.add("flash-danger");
+
+    // condições de naufrágio (linhas 680/690/700)
+    if(n===3){ sink("A BOMBA Nº 3 EXPLODIU."); return; }
+    if(G.exploded.indexOf(2)>=0 && G.exploded.length===2){ sink("A BOMBA Nº 2 E OUTRA EXPLODIRAM."); return; }
+    if(G.exploded.length>=3){ sink("TRÊS BOMBAS EXPLODIRAM."); return; }
+
+    if(G.disarmed.length+G.exploded.length>=5){ winGame(); return; }
+    flashThen("alert","VOCÊ NÃO CONSEGUIU DESARMAR A BOMBA Nº "+n+". ELA EXPLODIU! "+DAMAGE[n]+".",gotoSelect);
+  }
+
+  function flashThen(cls,text,next){
+    setMsg(text,cls);
+    show("defuse");
+    setTimeout(function(){ if(!G.finished) next(); },1700);
+  }
+
+  // ---------- informante / suborno ----------
+  function openBribe(){
+    if(G.current==null) return;
+    if(G.bribeUsed){
+      setMsg("SUBORNO JÁ UTILIZADO. O informante cortou contato.","info");
+      return;
+    }
+    G._bribeThreshold = Math.floor(Math.random()*G.money*1.5)+10; // QP=RND(Q)*1.5+10
+    $("bribeText").innerHTML="QUANTIA DISPONÍVEL: $"+Math.round(G.money)+"<br>O INFORMANTE PERGUNTA:<br><b>quanto você oferece?</b>";
+    $("bribeInput").value="";
+    $("bribeModal").classList.add("active");
+    setTimeout(function(){$("bribeInput").focus();},50);
+  }
+  function offerBribe(){
+    var qo=parseInt($("bribeInput").value,10);
+    if(isNaN(qo)||qo<0){ $("bribeText").innerHTML="Digite um valor válido."; return; }
+    if(qo>G.money){ $("bribeText").innerHTML="NÃO DEVE SER MAIS DO QUE $"+Math.round(G.money)+".<br>Ofereça novamente."; return; }
+    if(qo<G._bribeThreshold){
+      // recusa: pode tentar de novo (texto pág.36). Mantemos o dinheiro.
+      $("bribeModal").classList.remove("active");
+      setMsg("O INFORMANTE NÃO ACEITOU. Você pode tentar de novo (S).","info");
+      return;
+    }
+    // aceitou
+    G.money-=qo;
+    G.bribeUsed=true;
+    var b=G.bombs[G.current];
+    var trap=b.layout.traps[Math.floor(Math.random()*2)];
+    b.revealed=trap;
+    $("bribeModal").classList.remove("active");
+    updateHud(); renderPanel();
+    setMsg("O INFORMANTE ACEITA E DIZ QUE O FIO Nº "+(trap+1)+" É UM FIO-ARMADILHA.","info");
+  }
+
+  // ---------- relatório ----------
+  function openReport(){
+    G.reports++;
+    var m=Math.floor((TIME_LIMIT-G.timeLeft)/60), s=(TIME_LIMIT-G.timeLeft)%60;
+    var obs="";
+    for(var i=1;i<=5;i++){ if(G.damage[i]) obs+="<li>"+G.damage[i]+"</li>"; }
+    if(!obs) obs="<li class='muted'>nenhuma avaria registrada</li>";
+    $("reportBody").innerHTML=
+      "<h3>RELATÓRIO Nº "+G.reports+"</h3>"+
+      "<div class='row'><span>TEMPO DECORRIDO</span><span>"+m+" MIN "+(s<10?"0":"")+s+" SEG</span></div>"+
+      "<div class='row'><span>BOMBAS DESARMADAS</span><span>"+(G.disarmed.join(" ")||"—")+"</span></div>"+
+      "<div class='row'><span>BOMBAS EXPLODIDAS</span><span>"+(G.exploded.join(" ")||"—")+"</span></div>"+
+      "<div class='row'><span>QUANTIA DISPONÍVEL</span><span>$"+Math.round(G.money)+"</span></div>"+
+      "<div style='margin-top:8px'>OBSERVAÇÕES:</div><ul>"+obs+"</ul>";
+    show("reportScreen");
+  }
+
+  // ---------- fins de jogo ----------
+  function winGame(){
+    finishGame();
+    var allDisarmed = G.disarmed.length===5;
+    G.money += allDisarmed ? (64000+Math.floor(Math.random()*12000)) : (19000+Math.floor(Math.random()*2000));
+    var m=Math.floor((TIME_LIMIT-G.timeLeft)/60), s=(TIME_LIMIT-G.timeLeft)%60;
+    $("overArt").textContent=
+"      \\o/   B R I T Â N I A   \\o/\n"+
+"   ____________________________\n"+
+"  /  []  []  []  []  []  []    \\___\n"+
+" /______________________________  \\\n"+
+"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+    $("overText").innerHTML=
+      "<p class='big' style='color:var(--ink)'>PARABÉNS !!!</p>"+
+      "<p class='lead'>Você conseguiu salvar a <b>Britânia</b> do naufrágio em "+m+" min "+s+" seg"+
+      (allDisarmed?", desarmando <b>todas</b> as bombas":"")+"!</p>"+
+      "<p class='lead'>Está sendo chamado para trabalhar no serviço de segurança nacional.</p>"+
+      "<p class='lead' style='color:var(--warn)'>QUANTIA FINAL: $"+Math.round(G.money)+"</p>";
+    updateHud();
+    show("over");
+  }
+
+  function sink(reason){
+    finishGame();
+    var m=Math.floor((TIME_LIMIT-G.timeLeft)/60), s=(TIME_LIMIT-G.timeLeft)%60;
+    $("overArt").textContent=
+"  * * * * *   U R G E N T E ! ! !   * * * * *\n"+
+"            ~~~~~~ \\        /\n"+
+"        ~~~~~~~~~~~ \\BRITÂNIA\n"+
+"     ~~~~~~~~~~~~~~~~~\\____ /~~~~~~\n"+
+"   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+    $("overText").innerHTML=
+      "<p class='big' style='color:var(--danger)'>O NAVIO AFUNDOU</p>"+
+      "<p class='lead'>"+reason+"</p>"+
+      "<p class='lead muted'>Naufraga recentemente o transatlântico 'Britânia', pesando "+
+        (100+Math.floor(Math.random()*500))+" toneladas, devido à ação de terroristas. "+
+        "Buscas já estão sendo feitas no local; até agora não há sobreviventes...</p>"+
+      "<p class='lead'>Tempo decorrido: "+m+" min "+s+" seg &middot; Quantia: $"+Math.round(G.money)+"</p>";
+    show("over");
+  }
+
+  function giveUp(){
+    finishGame();
+    var rest=5-(G.disarmed.length+G.exploded.length);
+    var m=Math.floor((TIME_LIMIT-G.timeLeft)/60), s=(TIME_LIMIT-G.timeLeft)%60;
+    $("overArt").textContent="";
+    $("overText").innerHTML=
+      "<p class='big' style='color:var(--warn)'>QUE PENA...</p>"+
+      "<p class='lead'>Faltavam apenas <b>"+rest+"</b> bomba(s). Seu tempo era de "+m+" min "+s+" seg.</p>"+
+      "<p class='lead muted'>Quantia: $"+Math.round(G.money)+"</p>";
+    show("over");
+  }
+
+  function finishGame(){
+    G.finished=true;
+    if(timerHandle){clearInterval(timerHandle);timerHandle=null;}
+  }
+
+  // ---------- entrada por teclado ----------
+  // grupo helper precisa de .group em cada bomba
+  function attachGroups(){ for(var n=1;n<=5;n++) G.bombs[n].group=groupOf(n); }
+
+  document.addEventListener("keydown",function(e){
+    // título / ajuda / fim: atalhos simples
+    var active=document.querySelector(".screen.active");
+    var id=active?active.id:"";
+
+    if(id==="title"){
+      if(e.key==="Enter"){ e.preventDefault(); beginGame(); }
+      return;
+    }
+    if(id==="over"){
+      if(e.key.toLowerCase()==="s"){ e.preventDefault(); beginGame(); }
+      if(e.key.toLowerCase()==="n"){ e.preventDefault(); show("title"); $("hud").style.display="none"; }
+      return;
+    }
+    if(id==="reportScreen"){
+      if(e.key==="Enter"){ e.preventDefault(); show("defuse"); }
+      return;
+    }
+    if(id==="select"){
+      if(e.key>="1"&&e.key<="5"){ e.preventDefault(); chooseBomb(parseInt(e.key,10)); }
+      return;
+    }
+    if(id==="defuse"){
+      if($("bribeModal").classList.contains("active")||$("quitModal").classList.contains("active")) return;
+      switch(e.key){
+        case "ArrowUp":   e.preventDefault(); moveCursor(-1); break;
+        case "ArrowDown": e.preventDefault(); moveCursor(1); break;
+        case "ArrowLeft": e.preventDefault(); cutWire(); break;
+        default:
+          var k=e.key.toLowerCase();
+          if(k==="r"){ e.preventDefault(); openReport(); }
+          else if(k==="s"){ e.preventDefault(); openBribe(); }
+          else if(k==="d"){ e.preventDefault(); $("quitModal").classList.add("active"); }
+      }
+      return;
+    }
+  });
+
+  // ---------- botões ----------
+  $("startBtn").addEventListener("click",beginGame);
+  $("helpBtn").addEventListener("click",function(){show("help");});
+  $("helpBack").addEventListener("click",function(){show("title");});
+  $("reportBack").addEventListener("click",function(){show("defuse");});
+  $("againBtn").addEventListener("click",beginGame);
+  $("bribeOffer").addEventListener("click",offerBribe);
+  $("bribeCancel").addEventListener("click",function(){$("bribeModal").classList.remove("active");});
+  $("bribeInput").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();offerBribe();}});
+  $("quitYes").addEventListener("click",function(){$("quitModal").classList.remove("active");giveUp();});
+  $("quitNo").addEventListener("click",function(){$("quitModal").classList.remove("active");});
+
+  document.querySelectorAll('#defuse .btn[data-act]').forEach(function(btn){
+    btn.addEventListener("click",function(){
+      var a=btn.getAttribute("data-act");
+      if(a==="report") openReport();
+      else if(a==="bribe") openBribe();
+      else if(a==="quit") $("quitModal").classList.add("active");
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
