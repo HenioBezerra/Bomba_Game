@@ -223,8 +223,8 @@
    ========================================================================= */
 (function(){
   // paleta CoCo aproximada (índices 0-8)
-  var PAL=[[16,16,16],[48,208,32],[240,224,32],[32,48,224],[224,32,32],
-           [236,236,208],[32,192,192],[208,32,192],[240,128,32]];
+  var PAL=[[18,18,18],[46,190,60],[242,214,40],[40,84,232],[216,44,40],
+           [236,232,205],[40,200,190],[208,48,192],[240,132,40]];
 
   function CoCo(w,h){ this.w=w; this.h=h; this.buf=new Uint8Array(w*h);
     this.color=1; this.bg=5; this.x=0; this.y=0; this.scale=4; this.angle=0; }
@@ -299,8 +299,12 @@
     w=Math.abs(x1-x0)+1,h=Math.abs(y1-y0)+1,data=new Uint8Array(w*h);
     for(var y=0;y<h;y++)for(var x=0;x<w;x++)data[y*w+x]=this.get1(a+x,b+y);
     return {w:w,h:h,data:data}; };
-  P.put=function(x0,y0,spr){ var a=x0|0,b=y0|0;
-    for(var y=0;y<spr.h;y++)for(var x=0;x<spr.w;x++)this.pset(a+x,b+y,spr.data[y*spr.w+x]); };
+  // PUT com cor transparente opcional (trans) e escala inteira opcional (sc)
+  P.put=function(x0,y0,spr,trans,sc){ var a=x0|0,b=y0|0; sc=sc||1;
+    for(var y=0;y<spr.h;y++)for(var x=0;x<spr.w;x++){ var v=spr.data[y*spr.w+x];
+      if(trans!==undefined && v===trans)continue;
+      if(sc===1){ this.pset(a+x,b+y,v); }
+      else { for(var yy=0;yy<sc;yy++)for(var xx=0;xx<sc;xx++)this.pset(a+x*sc+xx,b+y*sc+yy,v); } } };
   // desenha para um <canvas> (opcional crop)
   P.render=function(canvas,cx,cy,cw,ch){
     cx=cx||0; cy=cy||0; cw=cw||this.w; ch=ch||this.h;
@@ -383,8 +387,10 @@
       // fio-armadilha revelado pelo informante
       if(state.revealed===k && !cut){ c.color=2; c.line(114,H-2,120,H-2,2); c.line(114,H+2,120,H+2,2); }
     }
-    // alicate (sprite A) na linha atual — linha 410
-    c.put(166, state.fio*14+12, SPR.A);
+    // alicate (sprite A) sobre o fio selecionado — linha 410, aproximado dos fios
+    var H=30+14*state.fio;
+    c.line(112,H,130,H,3);                         // "haste" ligando o alicate ao fio
+    c.put(128, state.fio*14+12, SPR.A, 5);         // fundo (buff) transparente
     return c;
   }
 
