@@ -60,11 +60,27 @@ explosões e subornos custam.
 ## Arquivos
 
 - **`index.html`** — o jogo recriado (HTML + CSS + JavaScript, arquivo único).
-- **`bomba_trscolor.bas`** — transcrição, em melhor esforço, da listagem em
-  Extended Color BASIC das páginas 38–39 da revista, usada como referência para
-  reconstruir a lógica. Por se tratar de uma digitalização de 1986, alguns
-  caracteres das densas instruções gráficas (`DRAW`, `LINE`, `CIRCLE`, `PAINT`)
-  podem conter imprecisões; a **lógica de jogabilidade**, contudo, foi
-  reconstruída fielmente (geração e conjugação dos fios, condições de naufrágio,
-  temporizador de 5 min via `TIMER>=18000`, informante/suborno, relatório e
-  pontuação).
+- **`bomba_trscolor.bas`** — transcrição da listagem em Extended Color BASIC das
+  páginas 38–39 da revista, revisada a partir de uma digitalização de alta
+  resolução. Inclui as instruções gráficas (`DRAW`, `LINE`, `CIRCLE`, `PAINT`)
+  do navio, da bomba, do alicate e do painel de fios.
+
+## Gráficos originais
+
+Os gráficos do jogo **não são desenhos novos**: o `index.html` traz um pequeno
+interpretador dos comandos gráficos do TRS-80 Color (`PMODE`, `PCLS`, `COLOR`,
+`LINE`, `CIRCLE`, `PAINT`, `DRAW`, `GET`/`PUT`) que **executa as mesmas cadeias
+de comandos da listagem original** para produzir:
+
+- o transatlântico **Britânia** (linhas 220–250), com casco, vigias, chaminé,
+  o letreiro "BRITANIA" e a linha d'água;
+- o **painel de desarme** (linhas 380–400): moldura vermelha, interior amarelo e
+  os dez fios;
+- o **alicate** (linhas 360–370), extraído como sprite e posicionado sobre o
+  fio selecionado, movendo-se com as setas como no programa de 1986.
+
+A **lógica de jogabilidade** também segue a listagem fielmente: geração e
+conjugação dos fios (`B(n,0..2)` ativos, `B(n,3..4)` armadilha, `B(n,5)`
+conjugador), renumeração ao cortar o conjugador (linhas 790–810), condições de
+naufrágio (linhas 680–710), temporizador de 5 min (`TIMER>=18000`),
+informante/suborno, relatório e pontuação.
