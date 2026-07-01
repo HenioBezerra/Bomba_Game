@@ -370,12 +370,10 @@
     var c=new CoCo(256,192); c.pcls(5);
     // 380 painel
     c.color=4; c.line(16,16,124,170,4,'BF');       // COLOR4 caixa vermelha
-    c.color=2; c.x=135;c.y=34;                     // rotulo "BOMBA" (C2)
-    c.draw("C2BM135,34U8ER3F1;D8GL3"); c.line(139,40,139,49,2);
-    c.draw("BM134,55U1E1R4F1D4;M-5,3D2R6BM-6,4R5D3;G1NL3F1D4G1L3;H1U3BM+5,8ND10L1D2;L3D4NR3H1D2R4;BM+1,7L5D4R4F1D4;G1L3H1U2");
-    c.draw("BM+6,8U1H1L4G1D8;F1R3E1U3H1L3;BM-1,9NR6D1R6D4L2;D2L2D3BM-1,8H1U2;E1R3F1D2G1NL3;F1D4G1L3H1U4;BM+0,16D2F1R3E1U8;H1L3G1D2F1R3");
     // 390 moldura interna
     c.color=2; c.line(20,20,120,166,2,'B'); c.paint(68,21,2,2);
+    // título legível (substitui o rótulo estilizado do DRAW original)
+    drawText(c,18,5,"BOMBA Nº "+state.bombN,4,1);
     // 400 dez fios (H=30..156 step14) — cortados viram cachos amarelos (linha 430)
     for(var k=0;k<10;k++){ var H=30+14*k, cut=state.cut[k];
       if(!cut){ c.line(28,H,112,H,4); }            // fio intacto (vermelho)
@@ -404,6 +402,21 @@
   function drawDigit(c,x,y,val,col){ var s=''+val;
     for(var ci=0;ci<s.length;ci++){ var g=FONT[s[ci]]; if(!g)continue;
       for(var ry=0;ry<5;ry++)for(var rx=0;rx<3;rx++) if(g[ry][rx]==='1') c.pset(x+ci*4+rx,y+ry,col);
+    } }
+
+  // fonte 5x5 para o título legível do painel
+  var F5={
+    'A':["01110","10001","11111","10001","10001"],'B':["11110","10001","11110","10001","11110"],
+    'M':["10001","11011","10101","10001","10001"],'N':["10001","11001","10101","10011","10001"],
+    'O':["01110","10001","10001","10001","01110"],' ':["00000","00000","00000","00000","00000"],
+    'º':["01100","10010","01100","00000","00000"],
+    '0':["01110","10011","10101","11001","01110"],'1':["00100","01100","00100","00100","01110"],
+    '2':["11110","00001","01110","10000","11111"],'3':["11110","00001","01110","00001","11110"],
+    '4':["00110","01010","10010","11111","00010"],'5':["11111","10000","11110","00001","11110"]};
+  function drawText(c,x,y,s,col,sc){ sc=sc||1;
+    for(var i=0;i<s.length;i++){ var g=F5[s.charAt(i)]||F5[' '];
+      for(var ry=0;ry<5;ry++)for(var rx=0;rx<5;rx++) if(g[ry].charAt(rx)==='1')
+        for(var a=0;a<sc;a++)for(var b=0;b<sc;b++) c.pset(x+(i*6+rx)*sc+a,y+ry*sc+b,col);
     } }
 
   // ---- naufrágio (reaproveita o navio, meio afundado, sob ondas) ----
