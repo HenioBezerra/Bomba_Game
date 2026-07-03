@@ -57,8 +57,8 @@
     Reprodução fiel da listagem em Extended Color BASIC (págs. 38–39): textos, gráficos
     (DRAW/LINE/CIRCLE/PAINT), tela de texto 32×16 e sons (PLAY/SOUND) executados como no original.
     Controles: ↑/↓ movem o alicate, ← corta; R relatório, S informante, D desistir.
-    Os fios não são numerados na tela (como no original): o informante conta a partir do topo,
-    de 0 (primeiro fio) a 9 (último).
+    A coluna de dígitos ao lado do painel numera os fios de 0 (topo) a 9 (base),
+    como na tela original — é assim que o informante identifica um fio-armadilha.
   </footer>
 
 <script>
@@ -130,8 +130,9 @@ function Surf(){ this.buf=new Uint8Array(256*192); this.color=1; this.x=0; this.
       if(ch==='S'){num();continue;}
       if(ch==='A'){num();continue;}
       if(ch==='M'){ var relx=(s[i]==='+'||s[i]==='-'),nx=num();
-        if(s[i]===',')i++; var rely=(s[i]==='+'||s[i]==='-'),ny=num();
-        var tx=relx?this.x+nx:nx, ty=rely?this.y+ny:ny;
+        if(s[i]===',')i++; var ny=num();
+        // no ECB, o sinal no X torna o movimento inteiro relativo (x e y)
+        var tx=relx?this.x+nx:nx, ty=relx?this.y+ny:ny;
         if(!blank)this.lineRaw(this.x,this.y,tx,ty,this.color);
         if(!noup){this.x=tx;this.y=ty;} blank=noup=false; continue; }
       var d=dirs[ch];
@@ -363,45 +364,45 @@ function putAlicate(fio){ defuse.put(166,fio*14+12,SPR_A); }                    
 function drawConjWarning(){                   // 770-780 — letreiro DRAW no rodapé
   var c=defuse; c.color=3; c.x=18; c.y=179;
   c.draw("C3BM18,179U1H1L3G1;D8F1R3E1U1BM+9,1;F1R3E1U8H1L3;G1D8BM+14,1U10F1D3;R3D3R1ND3U7BM+7,7;D2F1R4E1U9NL4;R1BM+9,0D9F1R3E1;U9");
-  c.draw("BM+14,2U1H1L3G1D8F1R3E1;U2L2BM+11,3U9E1R3F1D4NL5D5;BM+10,0L1U1OR2F1R1;F1D6G1BM+14,1L3H1U8E1R3;F1D8BM+9,1U1OR4F1D3;G1L2D1F4");
+  c.draw("BM+14,2U1H1L3G1D8F1R3E1;U2L2BM+11,3U9E1R3F1D4NL5D5;BM+10,0L1U10R2F1R1;F1D6G1BM+14,1L3H1U8E1R3;F1D8BM+9,1U10R4F1D3;G1L2D1F4");
 }
 
 /* avarias no navio — 110-170 (desenham na página do navio) */
 async function dmg1(){                        // 110 — fumaça no salão de jogos
-  var c=ship;
-  c.line(184,84,192,104,BLACK,'BF'); c.circle(174,92,16,BLACK); c.paint(166,100,BUFF,BUFF);
-  c.color=BLACK; c.draw("C0BM188,104E10H2E8M-2,12G8L6"); c.paint(194,100,BLACK,BLACK);
+  var c=ship;                                  // COLOR5 (680): traço buff escava o navio
+  c.line(184,84,192,104,BUFF,'BF'); c.circle(174,92,16,BUFF); c.paint(166,100,BUFF,BUFF);
+  c.draw("C0BM188,104E10H2E8M-2,12G8L6"); c.paint(194,100,BLACK,BLACK);
   M.render(); return "FUMACA NO SALAO DE JOGOS";
 }
 async function dmg2(){                        // 120-130 — pane na casa das máquinas
   var c=ship, D2=c.get(63,150,81,158);
-  c.line(63,150,81,158,BLACK,'BF');
+  c.line(63,150,81,158,BUFF,'BF');
   for(var h=1;h<=6;h++){ c.put(8*h+63,150-4*h,D2); M.render(); await iter(10*20);
-    if(h<6)c.line(8*h+63,150-4*h,8*h+81,158-4*h,BLACK,'BF'); }
+    if(h<6)c.line(8*h+63,150-4*h,8*h+81,158-4*h,BUFF,'BF'); }
   M.render(); return "PANE NA CASA DAS MAQUINAS";
 }
 async function dmg3(){                        // 140-150 — o navio está afundando
-  var c=ship;
-  c.line(120,160,144,160,BLACK);
+  var c=ship;                                  // PSET=buff (COLOR5), PRESET=preto
+  c.line(120,160,144,160,BUFF);
   for(var h=145;h<=159;h++){
-    c.line(141,h,191+159-h,h,BLACK);
-    c.line(130,160,140,168,BLACK,'BF');
-    c.circle(132,160,4,BLACK,1,0,.25); c.circle(140,168,4,BLACK,1,.5,.75);
+    c.line(141,h,191+159-h,h,BUFF);
+    c.line(130,160,140,168,BUFF,'BF');
+    c.circle(132,160,4,BUFF,1,0,.25); c.circle(140,168,4,BUFF,1,.5,.75);
     var i=rnd(40)+5;
-    c.line(132-i,h+25,132+i,h+25,BUFF); c.line(140,160,132,168,BUFF);
+    c.line(132-i,h+25,132+i,h+25,BLACK); c.line(140,160,132,168,BLACK);
     M.render(); await iter(20);
   }
   await iter(500); M.render(); return "O NAVIO ESTA' AFUNDANDO";
 }
 async function dmg4(){                        // 160 — há feridos na enfermaria
   var c=ship;
-  c.line(88,82,104,92,BLACK,'BF');
-  c.color=BLACK; c.draw("C0BM88,90;M+14,6;M+3,-6;M-17,-6;D6"); c.paint(100,92,BLACK,BLACK);
+  c.line(88,82,104,92,BUFF,'BF');
+  c.draw("C0BM88,90;M+14,6;M+3,-6;M-17,-6;D6"); c.paint(100,92,BLACK,BLACK);
   M.render(); return "HA FERIDOS NA ENFERMARIA";
 }
 async function dmg5(){                        // 170 — estragos no convés
   var c=ship;
-  c.line(224,112,184,108,BLACK); c.line(184,108,200,104,BLACK); c.paint(220,108,BUFF,BUFF);
+  c.line(224,112,184,108,BUFF); c.line(184,108,200,104,BUFF); c.paint(220,108,BUFF,BUFF);
   M.render(); return "ESTRAGOS NO CONVES";
 }
 var DMG=[null,dmg1,dmg2,dmg3,dmg4,dmg5];
@@ -510,8 +511,9 @@ async function askNext(){
     G.phase='ask';
     flushKeys();
     var s=(await inputLine()).trim().toUpperCase();
-    if(s==='R'){ await report(true); continue; }                       // GOSUB560
-    if(s==='D'){ var r=await desist('H'); if(r==='END')return 0; continue; } // GOSUB650
+    if(s==='R'){ await report(true); if(timeOut())return -1; continue; }     // GOSUB560; 590 THEN420
+    if(s==='D'){ var r=await desist('H'); if(r==='END')return 0;
+      if(r==='TIMEOUT')return -1; continue; }                                // GOSUB650
     var n=parseInt(s,10)||0;
     if(n<1||n>5)continue;                                              // 500
     if(G.C.indexOf(String(n))>=0){
@@ -526,12 +528,12 @@ async function askNext(){
 async function report(waitKey){
   M.text(); M.cls();
   G.R++;
-  M.printAt(9,"RELATORIO N"+bn(G.R));
+  M.printAt(9,"RELATORIO N@"+bn(G.R));
   M.cursor=64;
   M.print([" TEMPO:"]);
   M.print([" BOMBAS DESARMADAS: "+G.CD]);
   M.print([" BOMBAS EXPLODIDAS: "+G.CE]);
-  M.print([" QUANTIA DISPONIVEL: "+G.Q]);
+  M.print([" QUANTIA DISPONIVEL: U$"+bn(G.Q)]);
   M.print([" SUBORNO - "+G.RS]);
   M.newline();
   M.print([" OBSERVACOES:"]);
@@ -616,11 +618,11 @@ async function explode(){
   var P=(N===1)?"C0":"C5";                     // 680
   ship.color=(N===1)?BLACK:BUFF; ship.draw(P+NU[5-N]);
   M.render();
-  G.M[N]=await DMG[N]();                       // avaria + mensagem ZY$
+  G.M[N]=await DMG[N]();                       // avaria + mensagem ZY$ (COLOR5)
   await iter(3500);
-  if(N===3)return 'SINK';
-  if(N===2)G.Q-=21; else if(N===1)G.Q-=66; else G.Q-=1;
-  if(G.CE.indexOf('2')>=0&&G.NE===2)return 'SINK';   // 690
+  if(N===3){ G.Q+=9; return 'SINK'; }          // 680
+  if(N===2)G.Q+=21; else if(N===1)G.Q+=66; else G.Q+=100;
+  if(G.CE.indexOf('2')>=0&&G.NE>=2)return 'SINK';    // 690
   if(G.NE<3){                                  // 700
     M.text(); M.cls();
     M.print([',',',',' VOCE NAO CONSEGUIU DESARMAR',',',' A BOMBA'+bn(N)+'ELA EXPLODIU.',',',
@@ -638,7 +640,7 @@ async function sinkScreen(){
   G.Tfinal=Tmin();
   M.text(); M.cls();
   M.printAt(1,'*'.repeat(30));
-  M.printAt(43,"URGENTE !!");
+  M.printAt(43,"URGENTE !!!");
   M.printAt(33,'*'); M.printAt(62,'*');
   M.printAt(65,'*'.repeat(30));
   M.cursor=96;
@@ -660,7 +662,7 @@ async function winScreen(){
   var t=G.Tfinal;
   if(G.ND===5)G.Q+=64000+rnd(12000); else G.Q+=19000+rnd(2000);  // 530
   M.text(); M.cls();
-  M.printAt(10,"PARABENS !!!");
+  M.printAt(10,"PARABENS !!");
   M.cursor=64;
   M.print([',',',',' VOCE CONSEGUIU SALVAR O']);
   M.print(['BRITANIA DO NAUFRAGIO EM,']);
@@ -698,10 +700,10 @@ async function playRound(){
     if(k!=='ArrowLeft')continue;               // CHR$(8)
     if(G.CF[G.fio])continue;                   // 430 — fio já cortado
     defuse.put(166,G.fio*14+12,SPR_C);         // alicate "fecha"
-    var D=rnd(64)+32;                          // cacho amarelo sobre o fio
+    var D=rnd(64)+32;                          // 430: COLOR2 + cachos vermelhos
     defuse.line(D,G.fio*14+30,D+12,G.fio*14+30,2);
-    defuse.circle(D,G.fio*14+36,8,2,4/8,.75,1.75);
-    defuse.circle(D+12,G.fio*14+24,8,2,4/8,.75,1.5);
+    defuse.circle(D,G.fio*14+36,8,4,.75,.75,1);
+    defuse.circle(D+12,G.fio*14+24,8,4,.75,.25,.5);
     M.render(); await sleep(90);
     G.CF[G.fio]=true;                          // 440
     eraseAlicate(G.fio); putAlicate(G.fio); M.render();
@@ -719,6 +721,7 @@ async function playRound(){
       M.print([',',',',' VOCE CONSEGUIU DESARMAR',',',',',' A BOMBA'+bn(G.N)]);
       await iter(500); M.cls();
       var nx=await askNext(); if(nx===0)return 'END';
+      if(nx===-1)return 'SINK';
       G.N=nx;
       drawDefusePanel(); G.fio=9; G.CF={};
       putAlicate(G.fio); M.show(defuse); G.phase='defuse'; flushKeys();
@@ -728,6 +731,7 @@ async function playRound(){
       var res=await explode();
       if(res==='SINK')return 'SINK';
       var nx2=await askNext(); if(nx2===0)return 'END';
+      if(nx2===-1)return 'SINK';
       G.N=nx2;
       drawDefusePanel(); G.fio=9; G.CF={};
       putAlicate(G.fio); M.show(defuse); G.phase='defuse'; flushKeys();

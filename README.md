@@ -63,8 +63,9 @@ grupo. Ao cortar o **fio-conjugador** de uma bomba, as demais do grupo são
 - **D** — desistir
 - Há um teclado auxiliar na página para jogar no celular/tablet.
 
-Os fios não são numerados na tela (como no original): quando o informante cita
-um fio, conte a partir do topo — de 0 (primeiro fio) a 9 (último).
+Os fios são numerados na tela de 0 (topo) a 9 (base) pela coluna de dígitos ao
+lado do painel — desenhada pelas cadeias `DRAW` originais (linhas 380–390). É
+por esse número que o informante identifica um fio-armadilha.
 
 A pontuação é feita em dinheiro: cada fio cortado e cada bomba desarmada rendem,
 explosões e subornos custam.
