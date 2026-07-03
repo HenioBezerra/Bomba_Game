@@ -5,272 +5,119 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BOMBA &mdash; Resgate em Alto-Mar (TRS-Color, 1986)</title>
 <style>
-  :root{
-    --bg:#0a1f12; --panel:#0e2b18; --ink:#36e06a; --ink-dim:#1f8a40;
-    --warn:#ffd23f; --danger:#ff5a4d; --line:#13502b;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0;background:#000;color:var(--ink);
-    font-family:"Courier New",ui-monospace,Menlo,Consolas,monospace;}
-  body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;
-    background:radial-gradient(ellipse at center,#0a1f12 0%,#04110a 70%,#000 100%);}
-  #crt{width:min(900px,100%);background:var(--bg);border:3px solid var(--line);
-    border-radius:14px;padding:18px 20px 22px;position:relative;overflow:hidden;
-    box-shadow:0 0 0 6px #051208,0 0 40px rgba(54,224,106,.15),inset 0 0 60px rgba(0,0,0,.6);}
-  #crt::after{content:"";position:absolute;inset:0;pointer-events:none;
-    background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.18) 3px);
-    border-radius:14px;}
-  header{display:flex;justify-content:space-between;align-items:flex-end;
-    border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:10px;flex-wrap:wrap;gap:6px}
-  h1{font-size:22px;letter-spacing:3px;margin:0;text-shadow:0 0 8px rgba(54,224,106,.5)}
-  .sub{font-size:11px;color:var(--ink-dim);letter-spacing:1px}
-  .hud{display:flex;gap:18px;font-size:13px;flex-wrap:wrap}
-  .hud b{color:var(--warn)}
-  .hud .t{color:var(--ink)}
-  .hud .t.low{color:var(--danger);animation:blink .8s steps(1) infinite}
-  @keyframes blink{50%{opacity:.35}}
-  #stage{position:relative;min-height:440px}
-  .screen{display:none}
-  .screen.active{display:block}
-  .center{text-align:center}
-  canvas.coco{image-rendering:pixelated;image-rendering:crisp-edges;background:#ececd0;
-    border:2px solid var(--line);border-radius:6px;box-shadow:0 0 18px rgba(0,0,0,.5)}
-  p.lead{font-size:14px;line-height:1.55;max-width:640px;margin:10px auto}
-  .muted{color:var(--ink-dim)}
-  .btn{cursor:pointer;background:transparent;color:var(--ink);border:2px solid var(--ink-dim);
-    border-radius:8px;padding:9px 16px;font-family:inherit;font-size:14px;letter-spacing:1px;
-    transition:all .12s;text-transform:uppercase}
-  .btn:hover{border-color:var(--ink);background:rgba(54,224,106,.1);box-shadow:0 0 14px rgba(54,224,106,.25)}
-  .btn:active{transform:translateY(1px)}
-  .btnrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
-
-  .bombgrid{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:18px 0}
-  .bombcard{width:118px;cursor:pointer;border:2px solid var(--ink-dim);border-radius:10px;
-    padding:12px 8px;text-align:center;transition:all .12s;background:rgba(0,0,0,.2)}
-  .bombcard:hover:not(.done){border-color:var(--ink);box-shadow:0 0 14px rgba(54,224,106,.25)}
-  .bombcard .num{font-size:30px;font-weight:bold}
-  .bombcard .st{font-size:11px;margin-top:4px;letter-spacing:1px}
-  .bombcard.done{opacity:.5;cursor:not-allowed}
-  .bombcard.disarmed{border-color:var(--ink);color:var(--ink)}
-  .bombcard.disarmed .st{color:var(--ink)}
-  .bombcard.exploded{border-color:var(--danger);color:var(--danger)}
-  .bombcard.exploded .st{color:var(--danger)}
-
-  #defuse .wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
-  #bombCanvas{width:420px;max-width:100%;height:auto}
-  #side{flex:1 1 220px;min-width:220px;max-width:280px}
-  .ctrls{font-size:12px;line-height:1.9}
-  .ctrls .k{display:inline-block;min-width:54px;color:var(--warn);font-weight:bold}
-  .msg{min-height:52px;border:2px solid var(--line);border-radius:8px;padding:8px;margin-top:10px;
-    font-size:13px;background:#06180d}
-  .msg.alert{border-color:var(--danger);color:var(--danger);text-shadow:0 0 6px rgba(255,90,77,.4)}
-  .msg.good{border-color:var(--ink);color:var(--ink)}
-  .msg.info{border-color:var(--warn);color:var(--warn)}
-
-  .report{border:2px solid var(--line);border-radius:10px;padding:14px 18px;max-width:560px;margin:10px auto;
-    font-size:13px;line-height:1.8;background:#06180d}
-  .report h3{margin:0 0 8px;letter-spacing:2px;text-align:center}
-  .report .row{display:flex;justify-content:space-between;border-bottom:1px dotted var(--line);padding:2px 0}
-  .report ul{margin:6px 0 0;padding-left:18px}
-
-  .modal{position:absolute;inset:0;background:rgba(2,10,5,.92);display:none;
-    align-items:center;justify-content:center;z-index:20;border-radius:10px}
-  .modal.active{display:flex}
-  .modalbox{border:2px solid var(--ink-dim);border-radius:10px;padding:20px;max-width:420px;width:90%;
-    background:var(--panel);text-align:center}
-  .modalbox input{font-family:inherit;font-size:18px;text-align:center;background:#02100a;color:var(--ink);
-    border:2px solid var(--ink-dim);border-radius:6px;padding:8px;width:160px;margin:10px 0}
-  .modalbox input:focus{outline:none;border-color:var(--ink)}
-
-  footer{margin-top:14px;border-top:1px solid var(--line);padding-top:8px;font-size:10px;
-    color:var(--ink-dim);text-align:center;letter-spacing:1px}
-  .big{font-size:20px;letter-spacing:2px}
-  .flash-danger{animation:flashred .12s steps(1) 8}
-  @keyframes flashred{50%{background:#2a0807;box-shadow:inset 0 0 80px rgba(255,90,77,.4)}}
+  body{margin:0;min-height:100vh;background:#161616;color:#9a9a9a;
+    font-family:"Courier New",ui-monospace,Menlo,Consolas,monospace;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:10px}
+  header{text-align:center}
+  h1{font-size:18px;letter-spacing:3px;margin:0;color:#ddd}
+  .sub{font-size:10px;letter-spacing:1px;color:#888}
+  #tv{position:relative;background:#222;border-radius:18px;padding:22px;
+    box-shadow:0 0 0 4px #0c0c0c,0 8px 40px rgba(0,0,0,.8)}
+  canvas#scr{display:block;width:min(768px,92vw);aspect-ratio:4/3;height:auto;
+    image-rendering:pixelated;image-rendering:crisp-edges;background:#000;border-radius:4px}
+  #power{position:absolute;inset:22px;display:flex;align-items:center;justify-content:center;
+    background:#000;color:#3ac04a;font-size:16px;letter-spacing:2px;cursor:pointer;
+    border-radius:4px;text-align:center;line-height:1.8}
+  #power.off{display:none}
+  #pad{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:800px}
+  #pad button{background:#2a2a2a;color:#ccc;border:1px solid #444;border-radius:6px;
+    font-family:inherit;font-size:13px;padding:8px 11px;cursor:pointer;min-width:38px}
+  #pad button:active{background:#3a3a3a}
+  #pad .wide{min-width:64px}
+  footer{font-size:10px;color:#666;text-align:center;max-width:760px;letter-spacing:.5px}
 </style>
 </head>
 <body>
-<div id="crt">
   <header>
-    <div>
-      <h1>B O M B A</h1>
-      <div class="sub">RESGATE EM ALTO-MAR &middot; VERSÃO TRS-COLOR (1986) &middot; H. BEZERRA &amp; J. AMORIM</div>
-    </div>
-    <div class="hud" id="hud" style="display:none">
-      <div>TEMPO <span class="t" id="hudTime">5:00</span></div>
-      <div>$ <b id="hudMoney">0</b></div>
-      <div>DESARM. <b id="hudDis">0</b>/5</div>
-      <div>EXPLOD. <b id="hudExp">0</b></div>
-    </div>
+    <h1>B O M B A</h1>
+    <div class="sub">RESGATE EM ALTO-MAR &middot; TRS-COLOR / COLOR 64 (MICRO SISTEMAS Nº 56, MAIO/1986) &middot; H. BEZERRA &amp; J. AMORIM</div>
   </header>
 
-  <div id="stage">
-
-    <!-- TITLE -->
-    <section class="screen active center" id="title">
-      <canvas id="shipCanvas" class="coco" width="256" height="150" style="width:512px;max-width:100%;height:auto;margin:6px auto;display:block"></canvas>
-      <p class="lead">Um grupo de terroristas espalhou <b>cinco bombas</b> no transatlântico inglês
-      <b>Britânia</b>. Você, perito em desarmar artefatos explosivos formado em engenharia bélica,
-      foi o escolhido para salvar a real embarcação do naufrágio.</p>
-      <p class="lead muted">Você tem <b>5 minutos</b>. Boa sorte.</p>
-      <div class="btnrow">
-        <button class="btn" id="startBtn">Iniciar resgate</button>
-        <button class="btn" id="helpBtn">Instruções</button>
-      </div>
-    </section>
-
-    <!-- HELP -->
-    <section class="screen center" id="help">
-      <h2 style="letter-spacing:2px">COMO JOGAR</h2>
-      <p class="lead" style="text-align:left">
-        Cada bomba possui <b>10 fios</b>:<br>
-        &middot; <b>2 fios-armadilha</b> — cortar qualquer um faz a bomba <span style="color:var(--danger)">explodir</span>.<br>
-        &middot; <b>3 fios-ativos</b> — corte os três para <span style="color:var(--ink)">desarmar</span>.<br>
-        &middot; <b>1 fio-conjugador</b> — desliga a conjugação do grupo (único fio cuja natureza é avisada).<br>
-        &middot; <b>4 fios-neutros</b> — não têm função.
-      </p>
-      <p class="lead" style="text-align:left">
-        As bombas <b>1 e 2</b> são conjugadas entre si; as bombas <b>3, 4 e 5</b> também. Bombas conjugadas
-        têm a <i>mesma</i> fiação — descobrir uma revela as outras do grupo, até que você corte o fio-conjugador.
-      </p>
-      <p class="lead" style="text-align:left">
-        O navio <b>afunda</b> se: a bomba <b>3</b> explodir; a bomba <b>2</b> e qualquer outra explodirem;
-        ou <b>três</b> bombas quaisquer explodirem. Se o tempo acabar com alguma bomba restante, a embarcação vai a pique.
-      </p>
-      <p class="lead" style="text-align:left">
-        <b>Controles:</b> setas <b>↑ / ↓</b> movem o alicate; <b>←</b> corta o fio.
-        <b>R</b> relatório &middot; <b>S</b> informante (suborno) &middot; <b>D</b> desistir.
-      </p>
-      <div class="btnrow"><button class="btn" id="helpBack">Voltar</button></div>
-    </section>
-
-    <!-- SELECT BOMB -->
-    <section class="screen center" id="select">
-      <h2 style="letter-spacing:2px">DIGA QUAL A BOMBA QUE VOCÊ QUER MEXAR</h2>
-      <div class="bombgrid" id="bombGrid"></div>
-      <p class="muted" id="selectHint" style="font-size:12px"></p>
-    </section>
-
-    <!-- DEFUSE -->
-    <section class="screen" id="defuse">
-      <div class="wrap">
-        <canvas id="bombCanvas" class="coco" width="256" height="192" title="Clique num fio ou use as setas"></canvas>
-        <div id="side">
-          <div class="ctrls">
-            <div><span class="k">↑ / ↓</span> mover alicate</div>
-            <div><span class="k">←</span> cortar fio</div>
-            <div><span class="k">R</span> relatório</div>
-            <div><span class="k">S</span> informante</div>
-            <div><span class="k">D</span> desistir</div>
-          </div>
-          <div class="btnrow" style="margin-top:10px">
-            <button class="btn" data-act="report" style="padding:6px 10px;font-size:12px">R</button>
-            <button class="btn" data-act="bribe" style="padding:6px 10px;font-size:12px">S</button>
-            <button class="btn" data-act="quit" style="padding:6px 10px;font-size:12px">D</button>
-          </div>
-          <div class="msg info" id="msg">Escolha um fio e corte com &larr;</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- REPORT -->
-    <section class="screen center" id="reportScreen">
-      <div class="report" id="reportBody"></div>
-      <div class="btnrow"><button class="btn" id="reportBack">&lt;ENTER&gt;</button></div>
-    </section>
-
-    <!-- GAME OVER -->
-    <section class="screen center" id="over">
-      <canvas id="overCanvas" class="coco" width="256" height="150" style="width:480px;max-width:100%;height:auto;margin:6px auto;display:none"></canvas>
-      <div id="overText"></div>
-      <div class="btnrow"><button class="btn" id="againBtn">Outra? (S/N)</button></div>
-    </section>
-
+  <div id="tv">
+    <canvas id="scr" width="256" height="192"></canvas>
+    <div id="power">LIGAR O COLOR 64<br><span style="font-size:11px;color:#2a8a36">(clique / toque — ativa o som)</span></div>
   </div>
 
-  <!-- bribe modal -->
-  <div class="modal" id="bribeModal">
-    <div class="modalbox">
-      <div id="bribeText"></div>
-      <input type="number" id="bribeInput" min="0" placeholder="quantia">
-      <div class="btnrow">
-        <button class="btn" id="bribeOffer">Oferecer</button>
-        <button class="btn" id="bribeCancel">Cancelar</button>
-      </div>
-    </div>
+  <div id="pad">
+    <button data-k="ArrowUp">&uarr;</button>
+    <button data-k="ArrowDown">&darr;</button>
+    <button data-k="ArrowLeft" class="wide">&larr; corta</button>
+    <button data-k="R">R</button>
+    <button data-k="S">S</button>
+    <button data-k="D">D</button>
+    <button data-k="N">N</button>
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+    <button data-k="0">0</button>
+    <button data-k="Enter" class="wide">ENTER</button>
   </div>
 
-  <!-- quit modal -->
-  <div class="modal" id="quitModal">
-    <div class="modalbox">
-      <div>VOCÊ QUER MESMO DESISTIR? (S/N)</div>
-      <div class="btnrow">
-        <button class="btn" id="quitYes">Sim (S)</button>
-        <button class="btn" id="quitNo">Não (N)</button>
-      </div>
-    </div>
-  </div>
-
-  <footer>Reconstrução fiel da listagem em Extended Color BASIC publicada na revista Micro Sistemas, maio/1986. Gráficos recriados executando os comandos DRAW/LINE/CIRCLE/PAINT originais.</footer>
-</div>
+  <footer>
+    Reprodução fiel da listagem em Extended Color BASIC (págs. 38–39): textos, gráficos
+    (DRAW/LINE/CIRCLE/PAINT), tela de texto 32×16 e sons (PLAY/SOUND) executados como no original.
+    Controles: ↑/↓ movem o alicate, ← corta; R relatório, S informante, D desistir.
+    Os fios não são numerados na tela (como no original): o informante conta a partir do topo,
+    de 0 (primeiro fio) a 9 (último).
+  </footer>
 
 <script>
-/* =========================================================================
-   CoCo — minúsculo interpretador gráfico do TRS-80 Color / Color 64
-   Reproduz os primitivos usados na listagem original (págs. 38-39):
-   PMODE/PCLS/COLOR, LINE (B/BF), CIRCLE (raio,cor,h/w,inicio,fim),
-   PAINT (flood-fill), DRAW (M/U/D/L/R/E/F/G/H/N/B/C/S/A) e GET/PUT.
-   ========================================================================= */
-(function(){
-  // paleta CoCo aproximada (índices 0-8)
-  var PAL=[[18,18,18],[46,190,60],[242,214,40],[40,84,232],[216,44,40],
-           [236,232,205],[40,200,190],[208,48,192],[240,132,40]];
+"use strict";
+/* ============================================================
+   BOMBA — Resgate em Alto-Mar (TRS-Color / Color 64, 1986)
+   Reimplementação fiel de bomba_trscolor.bas: os textos, os
+   gráficos e os sons saem das mesmas cadeias e comandos da
+   listagem. Comentários citam os números de linha do .bas.
+   ============================================================ */
 
-  function CoCo(w,h){ this.w=w; this.h=h; this.buf=new Uint8Array(w*h);
-    this.color=1; this.bg=5; this.x=0; this.y=0; this.scale=4; this.angle=0; }
-  var P=CoCo.prototype;
-  P.pcls=function(c){ if(c===undefined)c=this.bg; this.buf.fill(c); this.bg=c; };
-  P.pset=function(x,y,c){ x|=0; y|=0; if(x<0||y<0||x>=this.w||y>=this.h)return;
-    this.buf[y*this.w+x]=(c===undefined?this.color:c); };
-  P.get1=function(x,y){ x|=0; y|=0; if(x<0||y<0||x>=this.w||y>=this.h)return -1;
-    return this.buf[y*this.w+x]; };
+/* ---------- paleta CoCo ---------- */
+var PAL=[[16,16,16],[46,190,60],[242,214,40],[40,84,232],[216,44,40],
+         [236,232,205],[40,200,190],[208,48,192],[240,132,40]];
+var GREEN=1,BLACK=0,BUFF=5;
+
+/* fator de tempo (?fast=1 acelera para testes) */
+var SPEED=/[?&]fast=1/.test(location.search)?0.06:1;
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms*SPEED);});}
+function iter(n){return sleep(n*0.7);}          // FOR H=1 TO n : NEXT
+function rnd(n){return Math.floor(Math.random()*n)+1;}   // RND(n) = 1..n
+
+/* ---------- superfícies gráficas 256x192 (PMODE) ---------- */
+function Surf(){ this.buf=new Uint8Array(256*192); this.color=1; this.x=0; this.y=0; }
+(function(){
+  var P=Surf.prototype, W=256, H=192;
+  P.pcls=function(c){ this.buf.fill(c===undefined?GREEN:c); };
+  P.pset=function(x,y,c){ x|=0;y|=0; if(x<0||y<0||x>=W||y>=H)return;
+    this.buf[y*W+x]=(c===undefined?this.color:c); };
+  P.pget=function(x,y){ x|=0;y|=0; if(x<0||y<0||x>=W||y>=H)return -1; return this.buf[y*W+x]; };
   P.lineRaw=function(x0,y0,x1,y1,c){ x0|=0;y0|=0;x1|=0;y1|=0;
     var dx=Math.abs(x1-x0),dy=Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1,err=dx-dy;
     for(;;){ this.pset(x0,y0,c); if(x0===x1&&y0===y1)break;
       var e2=2*err; if(e2>-dy){err-=dy;x0+=sx;} if(e2<dx){err+=dx;y0+=sy;} } };
-  // LINE (x0,y0)-(x1,y1),PSET/PRESET[,B|BF]
   P.line=function(x0,y0,x1,y1,c,opt){
-    if(opt==='B'){ this.lineRaw(x0,y0,x1,y0,c); this.lineRaw(x1,y0,x1,y1,c);
-      this.lineRaw(x1,y1,x0,y1,c); this.lineRaw(x0,y1,x0,y0,c); }
+    if(opt==='B'){ this.lineRaw(x0,y0,x1,y0,c);this.lineRaw(x1,y0,x1,y1,c);
+      this.lineRaw(x1,y1,x0,y1,c);this.lineRaw(x0,y1,x0,y0,c); }
     else if(opt==='BF'){ var a=Math.min(y0,y1),b=Math.max(y0,y1);
-      for(var y=a;y<=b;y++) this.lineRaw(x0,y,x1,y,c); }
-    else this.lineRaw(x0,y0,x1,y1,c);
-  };
-  // CIRCLE (x,y),r,color,hw,start,end   (start/end fracoes 0..1, sentido horario, 0=leste)
+      for(var y=a;y<=b;y++)this.lineRaw(x0,y,x1,y,c); }
+    else this.lineRaw(x0,y0,x1,y1,c); };
   P.circle=function(x,y,r,c,hw,start,end){
     if(hw===undefined||hw===null)hw=1; if(start===undefined)start=0; if(end===undefined)end=1;
     if(end<start)end+=1;
     var ry=r*hw, steps=Math.max(8,Math.round(2*Math.PI*r));
-    var f0=start, f1=end, n=Math.max(2,Math.round(steps*(f1-f0)));
-    var px=null,py=null;
-    for(var i=0;i<=n;i++){ var f=f0+(f1-f0)*i/n, a=2*Math.PI*f;
+    var n=Math.max(2,Math.round(steps*(end-start))), px=null,py=null;
+    for(var i=0;i<=n;i++){ var a=2*Math.PI*(start+(end-start)*i/n);
       var cx=x+r*Math.cos(a), cy=y+ry*Math.sin(a);
-      if(px!==null) this.lineRaw(px,py,cx,cy,c); px=cx; py=cy; }
-  };
-  // PAINT (x,y),fill,border
+      if(px!==null)this.lineRaw(px,py,cx,cy,c); px=cx;py=cy; } };
   P.paint=function(x,y,fill,border){
-    x|=0;y|=0; if(x<0||y<0||x>=this.w||y>=this.h)return;
-    var start=this.buf[y*this.w+x]; if(start===border||start===fill)return;
-    var st=[[x,y]],w=this.w,h=this.h,buf=this.buf,seen=0,MAX=w*h;
+    x|=0;y|=0; if(x<0||y<0||x>=W||y>=H)return;
+    var start=this.buf[y*W+x]; if(start===border||start===fill)return;
+    var st=[[x,y]],buf=this.buf;
     while(st.length){ var p=st.pop(),cx=p[0],cy=p[1];
-      if(cx<0||cy<0||cx>=w||cy>=h)continue;
-      var v=buf[cy*w+cx]; if(v===border||v===fill)continue;
-      buf[cy*w+cx]=fill; if(++seen>MAX)break;
-      st.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]); }
-  };
-  // DRAW macro-language
+      if(cx<0||cy<0||cx>=W||cy>=H)continue;
+      var v=buf[cy*W+cx]; if(v===border||v===fill)continue;
+      buf[cy*W+cx]=fill;
+      st.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]); } };
   P.draw=function(s){
-    s=(''+s).toUpperCase(); var i=0,n=s.length,self=this;
+    s=(''+s).toUpperCase(); var i=0,n=s.length;
     function num(){ var st=i; if(s[i]==='+'||s[i]==='-')i++;
       while(i<n&&s[i]>='0'&&s[i]<='9')i++; return parseInt(s.slice(st,i),10); }
     var dirs={U:[0,-1],D:[0,1],L:[-1,0],R:[1,0],E:[1,-1],F:[1,1],G:[-1,1],H:[-1,-1]};
@@ -280,386 +127,670 @@
       if(ch==='B'){blank=true;continue;}
       if(ch==='N'){noup=true;continue;}
       if(ch==='C'){this.color=num();continue;}
-      if(ch==='S'){this.scale=num();continue;}
-      if(ch==='A'){this.angle=num();continue;}
-      var mult=this.scale/4;
-      if(ch==='M'){ var relx=(s[i]==='+'||s[i]==='-'), nx=num();
-        if(s[i]===',')i++; var rely=(s[i]==='+'||s[i]==='-'), ny=num();
+      if(ch==='S'){num();continue;}
+      if(ch==='A'){num();continue;}
+      if(ch==='M'){ var relx=(s[i]==='+'||s[i]==='-'),nx=num();
+        if(s[i]===',')i++; var rely=(s[i]==='+'||s[i]==='-'),ny=num();
         var tx=relx?this.x+nx:nx, ty=rely?this.y+ny:ny;
-        if(!blank) this.lineRaw(this.x,this.y,tx,ty,this.color);
+        if(!blank)this.lineRaw(this.x,this.y,tx,ty,this.color);
         if(!noup){this.x=tx;this.y=ty;} blank=noup=false; continue; }
       var d=dirs[ch];
       if(d){ var dist=1; if(i<n&&s[i]>='0'&&s[i]<='9')dist=num();
-        var ex=this.x+Math.round(d[0]*dist*mult), ey=this.y+Math.round(d[1]*dist*mult);
-        if(!blank) this.lineRaw(this.x,this.y,ex,ey,this.color);
-        if(!noup){this.x=ex;this.y=ey;} blank=noup=false; continue; }
-    }
-  };
+        var ex=this.x+d[0]*dist, ey=this.y+d[1]*dist;
+        if(!blank)this.lineRaw(this.x,this.y,ex,ey,this.color);
+        if(!noup){this.x=ex;this.y=ey;} blank=noup=false; continue; } } };
   P.get=function(x0,y0,x1,y1){ var a=Math.min(x0,x1),b=Math.min(y0,y1),
     w=Math.abs(x1-x0)+1,h=Math.abs(y1-y0)+1,data=new Uint8Array(w*h);
-    for(var y=0;y<h;y++)for(var x=0;x<w;x++)data[y*w+x]=this.get1(a+x,b+y);
+    for(var y=0;y<h;y++)for(var x=0;x<w;x++)data[y*w+x]=this.pget(a+x,b+y);
     return {w:w,h:h,data:data}; };
-  // PUT com cor transparente opcional (trans) e escala inteira opcional (sc)
-  P.put=function(x0,y0,spr,trans,sc){ var a=x0|0,b=y0|0; sc=sc||1;
-    for(var y=0;y<spr.h;y++)for(var x=0;x<spr.w;x++){ var v=spr.data[y*spr.w+x];
-      if(trans!==undefined && v===trans)continue;
-      if(sc===1){ this.pset(a+x,b+y,v); }
-      else { for(var yy=0;yy<sc;yy++)for(var xx=0;xx<sc;xx++)this.pset(a+x*sc+xx,b+y*sc+yy,v); } } };
-  // desenha para um <canvas> (opcional crop)
-  P.render=function(canvas,cx,cy,cw,ch){
-    cx=cx||0; cy=cy||0; cw=cw||this.w; ch=ch||this.h;
-    canvas.width=cw; canvas.height=ch;
-    var ctx=canvas.getContext('2d'), img=ctx.createImageData(cw,ch), d=img.data;
-    for(var y=0;y<ch;y++)for(var x=0;x<cw;x++){
-      var col=PAL[this.get1(cx+x,cy+y)]||PAL[5], o=(y*cw+x)*4;
-      d[o]=col[0];d[o+1]=col[1];d[o+2]=col[2];d[o+3]=255; }
+  P.put=function(x0,y0,spr){ var a=x0|0,b=y0|0;
+    for(var y=0;y<spr.h;y++)for(var x=0;x<spr.w;x++)this.pset(a+x,b+y,spr.data[y*spr.w+x]); };
+})();
+
+/* ---------- fonte 5x7 (célula 8x12) — MAIÚSCULAS; minúsculas em vídeo inverso ---------- */
+var FONT={
+ 'A':[14,17,17,17,31,17,17],'B':[30,17,17,30,17,17,30],'C':[14,17,16,16,16,17,14],
+ 'D':[28,18,17,17,17,18,28],'E':[31,16,16,30,16,16,31],'F':[31,16,16,30,16,16,16],
+ 'G':[14,17,16,16,19,17,15],'H':[17,17,17,31,17,17,17],'I':[14,4,4,4,4,4,14],
+ 'J':[1,1,1,1,1,17,14],'K':[17,18,20,24,20,18,17],'L':[16,16,16,16,16,16,31],
+ 'M':[17,27,21,21,17,17,17],'N':[17,25,21,19,17,17,17],'O':[14,17,17,17,17,17,14],
+ 'P':[30,17,17,30,16,16,16],'Q':[14,17,17,17,21,18,13],'R':[30,17,17,30,20,18,17],
+ 'S':[15,16,16,14,1,1,30],'T':[31,4,4,4,4,4,4],'U':[17,17,17,17,17,17,14],
+ 'V':[17,17,17,17,17,10,4],'W':[17,17,17,21,21,27,17],'X':[17,10,4,4,4,10,17],
+ 'Y':[17,10,4,4,4,4,4],'Z':[31,1,2,4,8,16,31],
+ '0':[14,17,19,21,25,17,14],'1':[4,12,4,4,4,4,14],'2':[14,17,1,6,8,16,31],
+ '3':[31,1,2,6,1,17,14],'4':[2,6,10,18,31,2,2],'5':[31,16,30,1,1,17,14],
+ '6':[6,8,16,30,17,17,14],'7':[31,1,2,4,8,8,8],'8':[14,17,17,14,17,17,14],
+ '9':[14,17,17,15,1,2,12],
+ ' ':[0,0,0,0,0,0,0],'!':[4,4,4,4,4,0,4],'"':[10,10,10,0,0,0,0],
+ '#':[10,10,31,10,31,10,10],'$':[4,15,20,14,5,30,4],'%':[24,25,2,4,8,19,3],
+ '&':[8,20,20,8,21,18,13],"'":[12,4,8,0,0,0,0],'(':[2,4,8,8,8,4,2],
+ ')':[8,4,2,2,2,4,8],'*':[0,4,21,14,21,4,0],'+':[0,4,4,31,4,4,0],
+ ',':[0,0,0,0,12,4,8],'-':[0,0,0,31,0,0,0],'.':[0,0,0,0,0,12,12],
+ '/':[0,1,2,4,8,16,0],':':[0,12,12,0,12,12,0],';':[0,12,12,0,12,4,8],
+ '<':[2,4,8,16,8,4,2],'=':[0,0,31,0,31,0,0],'>':[8,4,2,1,2,4,8],
+ '?':[14,17,1,2,4,0,4],'@':[14,17,1,13,21,21,14]};
+
+/* ---------- máquina: tela de texto 32x16 + vídeo ---------- */
+var M={
+  mode:'text',
+  cells:new Array(512),           // {ch, inv} — null = célula "apagada" (fundo do CLS)
+  clsColor:GREEN,                 // CLS (verde) ou CLS0 (preto)
+  cursor:0,
+  surf:null,                      // superfície gráfica exibida em modo gfx
+  colorset:1,                     // SCREEN 1,S — 0 troca buff->verde (pisca da explosão)
+  cvs:document.getElementById('scr'),
+  cursorOn:false,
+  cls:function(c){ this.clsColor=(c===0?BLACK:GREEN);
+    for(var i=0;i<512;i++)this.cells[i]=null; this.cursor=0; this.render(); },
+  putc:function(pos,ch,inv){ if(pos<0||pos>=512)return; this.cells[pos]={ch:ch,inv:!!inv}; },
+  scroll:function(){ for(var i=0;i<480;i++)this.cells[i]=this.cells[i+32];
+    for(i=480;i<512;i++)this.cells[i]=null; this.cursor-=32; },
+  writeStr:function(s){ for(var i=0;i<s.length;i++){ var ch=s[i];
+      var inv=(ch>='a'&&ch<='z'); if(inv)ch=ch.toUpperCase();
+      if(this.cursor>=512)this.scroll();
+      this.putc(this.cursor++,ch,inv); } },
+  printAt:function(pos,s){ this.cursor=pos; this.writeStr(s); this.render(); },
+  zone:function(){ this.cursor=(Math.floor(this.cursor/16)+1)*16;
+    if(this.cursor>=512)this.scroll(); },
+  newline:function(){ this.cursor=(Math.floor(this.cursor/32)+1)*32;
+    if(this.cursor>=512)this.scroll(); },
+  /* PRINT com zonas de vírgula: parts = strings | ',' | '\n' */
+  print:function(parts){ if(typeof parts==='string')parts=[parts];
+    for(var i=0;i<parts.length;i++){ var p=parts[i];
+      if(p===',')this.zone(); else if(p==='\n')this.newline();
+      else this.writeStr(p); }
+    this.newline(); this.render(); },
+  show:function(surf){ this.mode='gfx'; this.surf=surf; this.render(); },
+  text:function(){ this.mode='text'; this.render(); },
+  render:function(){
+    var ctx=this.cvs.getContext('2d'), img=ctx.createImageData(256,192), d=img.data;
+    if(this.mode==='gfx'&&this.surf){
+      var buf=this.surf.buf;
+      for(var i=0;i<49152;i++){ var v=buf[i];
+        if(this.colorset===0&&v===BUFF)v=GREEN;      // SCREEN 1,0 no pisca
+        var c=PAL[v]||PAL[0], o=i*4; d[o]=c[0];d[o+1]=c[1];d[o+2]=c[2];d[o+3]=255; }
+    } else {
+      var bg=PAL[this.clsColor], fg=PAL[BLACK], gr=PAL[GREEN];
+      for(var row=0;row<16;row++)for(var col=0;col<32;col++){
+        var cell=this.cells[row*32+col];
+        var cellBg=bg, cellFg=fg, glyph=null;
+        if(cell){ glyph=FONT[cell.ch]||FONT[' '];
+          if(cell.inv){ cellBg=PAL[BLACK]; cellFg=gr; } else { cellBg=gr; cellFg=PAL[BLACK]; } }
+        var showCur=(this.cursorOn && row*32+col===this.cursor);
+        for(var yy=0;yy<12;yy++)for(var xx=0;xx<8;xx++){
+          var on=false;
+          if(glyph&&yy>=2&&yy<9&&xx>=2&&xx<7) on=!!(glyph[yy-2]&(16>>(xx-2)));
+          var c=showCur?gr:(on?cellFg:cellBg);      // cursor = bloco verde piscante
+          var o=((row*12+yy)*256+(col*8+xx))*4;
+          d[o]=c[0];d[o+1]=c[1];d[o+2]=c[2];d[o+3]=255; } }
+    }
     ctx.putImageData(img,0,0);
-  };
-  window.CoCo=CoCo;
-})();
-
-/* =========================================================================
-   Cenas gráficas — portes diretos das linhas 220-250 (navio) e
-   360-400 (bomba + alicate + painel de fios).
-   ========================================================================= */
-(function(){
-  // ---- NAVIO "Britânia" (linhas 220-250, PMODE4 fundo buff) ----
-  function drawShip(){
-    var c=new CoCo(256,192); c.pcls(5);            // PCLS5 (buff)
-    c.color=0;                                     // COLOR0 (preto)
-    // 220 casco (DRAW relativo)
-    c.x=16;c.y=112;
-    c.draw("BM16,112R20U28R12U16E20;D36R4U4E8D12;R24D6L16D8R28U10;R16D10R40D6R16U8;BH4U8BF8D12R32D8;R16G48L128H48");
-    // 230 vigias / detalhes
-    var I,J;
-    for(I=88;I<=104;I+=8)for(J=40;J<=64;J+=8)c.line(J,I,J+4,I+4,0,'B');
-    c.line(72,100,84,112,0,'B');
-    for(I=102;I<=108;I+=6)for(J=92;J<=108;J+=4)c.line(J,I,J+4,I+4,0,'B');
-    for(I=92;I<=100;I+=4)for(J=120;J<=124;J+=4)c.line(J,I,J+4,I+4,0,'B');
-    // 240 escotilhas / chaminés
-    for(J=132;J<=156;J+=12){ c.line(J,104,J+8,108,0,'B'); c.line(J+4,104,J+8,108,0,'B'); }
-    for(J=48;J<=144;J+=16){ c.circle(J,124,4,0); c.circle(J+8,136,4,0); }
-    c.circle(184,136,4,0); c.circle(168,136,4,0);
-    c.line(72,88,76,92,0,'B'); c.line(80,88,84,92,0,'B');
-    // 250 chaminé + preenchimento do casco + "BRITANIA"
-    c.circle(184,96,4,0,1,0,.75); c.circle(184,92,8,0,1,0,.75);
-    c.paint(124,112,0,0);                          // casco preto
-    c.color=5;                                     // C5 (buff) letreiro
-    c.draw("BM157,120R3F1D1G1;NL3F1D2G1L3U7;BR8R3F1D1G1NL3;F1D3BL4U7BR10NL1;NR1D7NR1L1BU7;BR7R4BL2D7BR6U3;NR4U2E2F2D5BR4;U7BD1F4BD2U7BR6;NL1NR1D7NL1R1BR5;U3NR4U2E2F2D5");
-    // ondas
-    c.color=3;
-    for(var wv=0;wv<256;wv+=16){ c.circle(wv+8,168,8,3,.5,.5,1); }
-    return c;
   }
+};
+for(var _i=0;_i<512;_i++)M.cells[_i]=null;
 
-  // ---- BOMBA (linhas 360-370) para extrair os sprites do alicate ----
-  function buildBombSprites(){
-    var c=new CoCo(256,192); c.pcls(5);
-    c.color=3; c.x=192; c.y=156;                   // C3 (azul)
-    c.draw("BM192,156M-24,-4M+16,-4R16;E8NM+4,8R40F4G4L36;G8F8R36F4G4L40;NM+4,-8H8L16M-16,-4M+24,-4;BM166,104M+16,-6M+16,-2;M+10,-6NM+2,8M+40,4M+2,4M-2,+4M-38,-4;M-10,6M+10,6M+38,-4M+2,4M-2,4M-40,4NM+2,-8;M-10,-6M-16,-2M-16,-6");
-    // (linha 370 preenche o desenho; usamos o traçado como sprite do alicate)
-    var A=c.get(166,138,252,174), C=c.get(166,88,252,120);
-    return {A:A,C:C};
+/* ---------- teclado ---------- */
+var KEYQ=[];
+function pushKey(k){ if(KEYQ.length<8)KEYQ.push(k); }
+document.addEventListener('keydown',function(e){
+  var k=e.key;
+  if(k==='ArrowUp'||k==='ArrowDown'||k==='ArrowLeft'||k==='ArrowRight'||k===' ')e.preventDefault();
+  if(k==='Backspace'){e.preventDefault();pushKey('BS');return;}
+  if(k==='Enter'){pushKey('ENTER');return;}
+  if(k.length===1)pushKey(k.toUpperCase()); else pushKey(k);
+});
+document.querySelectorAll('#pad button').forEach(function(b){
+  b.addEventListener('click',function(){ var k=b.getAttribute('data-k');
+    pushKey(k==='Enter'?'ENTER':k); }); });
+function getKey(){ return KEYQ.length?KEYQ.shift():null; }
+function flushKeys(){ KEYQ.length=0; }
+async function inkey(){ for(;;){ var k=getKey(); if(k)return k; await sleep(16);} }
+async function waitEnter(){ for(;;){ var k=await inkey(); if(k==='ENTER')return; } }
+
+/* INPUT — eco na tela com cursor piscante */
+async function inputLine(){
+  M.writeStr('? '); M.render();
+  var buf='', blink=0;
+  for(;;){
+    var k=getKey();
+    if(k==='ENTER'){ M.cursorOn=false; M.newline(); M.render(); return buf; }
+    if(k==='BS'&&buf.length){ buf=buf.slice(0,-1); M.cursor--; M.putc(M.cursor,' ',false); M.render(); }
+    else if(k&&k.length===1&&k>=' '){ buf+=k; M.writeStr(k); M.render(); }
+    blink=(blink+1)%20; M.cursorOn=blink<10; M.render();
+    await sleep(30);
   }
+}
 
-  var SPR=null;
-  // ---- PAINEL DE DESARME (linhas 380-400 + PUT do alicate) ----
-  // state: {fio, cut:{pos:{d, type}}, revealed, bombN}
-  function drawDefuse(state){
-    if(!SPR) SPR=buildBombSprites();
-    var c=new CoCo(256,192); c.pcls(5);
-    // 380 painel
-    c.color=4; c.line(16,16,124,170,4,'BF');       // COLOR4 caixa vermelha
-    // 390 moldura interna
-    c.color=2; c.line(20,20,120,166,2,'B'); c.paint(68,21,2,2);
-    // título legível (substitui o rótulo estilizado do DRAW original)
-    drawText(c,18,5,"BOMBA Nº "+state.bombN,4,1);
-    // 400 dez fios (H=30..156 step14) — cortados viram cachos amarelos (linha 430)
-    for(var k=0;k<10;k++){ var H=30+14*k, cut=state.cut[k];
-      if(!cut){ c.line(28,H,112,H,4); }            // fio intacto (vermelho)
-      else { var D=cut.d;                          // linha 430 (cacho encaracolado)
-        c.line(28,H,D-4,H,4); c.line(D+16,H,112,H,4);   // pontas do fio cortado
-        c.circle(D,H+4,6,3,.75,.5,1); c.circle(D+12,H-4,6,3,.75,0,.5); }
-      // numero do fio (1-10) à esquerda para jogabilidade
-      drawDigit(c, 6, H-3, k+1, (state.fio===k)?2:0);
-      // fio-armadilha revelado pelo informante
-      if(state.revealed===k && !cut){ c.color=2; c.line(114,H-2,120,H-2,2); c.line(114,H+2,120,H+2,2); }
+/* ---------- som: PLAY e SOUND (Web Audio, onda quadrada) ---------- */
+var AC=null;
+function audioInit(){ try{ AC=new (window.AudioContext||window.webkitAudioContext)();
+  if(AC.state==='suspended')AC.resume(); }catch(e){AC=null;} }
+function tone(freq,ms,vol){ if(!AC)return; try{
+  var o=AC.createOscillator(),g=AC.createGain();
+  o.type='square'; o.frequency.value=freq;
+  g.gain.value=vol; o.connect(g); g.connect(AC.destination);
+  var t=AC.currentTime; o.start(t); o.stop(t+ms/1000);
+ }catch(e){} }
+var NOTE={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+var PST={oct:2,vol:31,len:4,tempo:2};
+async function play(str){
+  str=(''+str).toUpperCase(); var i=0,n=str.length;
+  function num(){ var s=i; while(i<n&&str[i]>='0'&&str[i]<='9')i++;
+    return s===i?null:parseInt(str.slice(s,i),10); }
+  var whole=3200/PST.tempo;                       // semibreve em ms
+  while(i<n){ var ch=str[i++];
+    if(ch===';'||ch===' ')continue;
+    if(ch==='O'){PST.oct=num()||2;continue;}
+    if(ch==='V'){PST.vol=num()||15;continue;}
+    if(ch==='L'){PST.len=num()||4;continue;}
+    if(ch==='T'){PST.tempo=num()||2;whole=3200/PST.tempo;continue;}
+    if(ch==='P'){var pn=num()||4;await sleep(whole/pn);continue;}
+    if(NOTE[ch]!==undefined){ var s=NOTE[ch];
+      if(str[i]==='#'||str[i]==='+'){s++;i++;} else if(str[i]==='-'){s--;i++;}
+      var ln=num()||PST.len, ms=whole/ln;
+      var f=261.63*Math.pow(2,(PST.oct-2)+s/12);
+      tone(f,ms,0.04+0.11*(PST.vol/31));
+      await sleep(ms); } }
+}
+async function sound(p,d){ var f=110*Math.pow(2,p/64);
+  tone(f,d*55,0.12); await sleep(d*55); }
+
+/* ============================================================
+   GRÁFICOS DO JOGO — portes literais das linhas do .bas
+   ============================================================ */
+var ship=new Surf(), defuse=new Surf(), work=new Surf();
+var SPR_A=null, SPR_C=null;   // GET(166,138)-(252,174),A / GET(166,88)-(252,120),C  (370)
+var NU=[                       // 300 — dígitos das bombas no navio
+ "BM236,102L4D2R2FD2GL2HU",    // NU$(0)  bomba 5
+ "BM80,107L4E2UED6",           // NU$(1)  bomba 4
+ "BM132,150UR4G2RFD2GL2HU",    // NU$(2)  bomba 3
+ "BM54,136UERFD2G3R3",         // NU$(3)  bomba 2
+ "BM166,102E2D6NL1R1"];        // NU$(4)  bomba 1
+
+function buildShip(){                         // 220-250 (PMODE4, PCLS5, COLOR0)
+  var c=ship; c.pcls(BUFF); c.color=BLACK;
+  c.draw("BM16,112R20U28R12U16E20;D36R4U4E8D12;R24D6L16D8R28U10;R16D10R40D6R16U8;BH4U8BF8D12R32D8;R16G48L128H48");
+  var I,J;
+  for(I=88;I<=104;I+=8)for(J=40;J<=64;J+=8)c.line(J,I,J+4,I+4,BLACK,'B');            // 230
+  c.line(72,100,84,112,BLACK,'B');
+  for(I=102;I<=108;I+=6)for(J=92;J<=108;J+=4)c.line(J,I,J+4,I+4,BLACK,'B');
+  for(I=92;I<=100;I+=4)for(J=120;J<=124;J+=4)c.line(J,I,J+4,I+4,BLACK,'B');
+  for(J=132;J<=156;J+=12){c.line(J,104,J+8,108,BLACK,'B');c.line(J+4,104,J+8,108,BLACK,'B');} // 240
+  for(J=48;J<=144;J+=16){c.circle(J,124,4,BLACK);c.circle(J+8,136,4,BLACK);}
+  c.circle(184,136,4,BLACK); c.circle(168,136,4,BLACK);
+  c.line(72,88,76,92,BLACK,'B'); c.line(80,88,84,92,BLACK,'B');
+  c.circle(184,96,4,BLACK,1,0,.75); c.circle(184,92,8,BLACK,1,0,.75);                 // 250
+  c.paint(124,112,BLACK,BLACK);
+  c.color=BUFF;
+  c.draw("BM157,120R3F1D1G1;NL3F1D2G1L3U7;BR8R3F1D1G1NL3;F1D3BL4U7BR10NL1;NR1D7NR1L1BU7;BR7R4BL2D7BR6U3;NR4U2E2F2D5BR4;U7BD1F4BD2U7BR6;NL1NR1D7NL1R1BR5;U3NR4U2E2F2D5");
+}
+function drawIntroExtras(c){                  // 270-300 — praia, píer, guindaste
+  c.color=BUFF;                                // o DRAW da 270 herda o C5 da linha 250:
+  c.draw("BM18,113R220G30;L69D16L74H46");      // contorno invisível que delimita o PAINT
+  c.color=BLACK;                               // COLOR0
+  c.line(140,122,220,122,BLACK); c.paint(132,114,BUFF,BUFF);                          // 270
+  c.paint(158,126,BUFF,BUFF); c.draw("BM32,128R192BG16L144U16");                      // 280
+  for(var J=40;J<=168;J+=16){ c.line(J,112,J,128,BLACK); c.line(J+40,128,J+40,144,BLACK); }
+  c.draw("BM172,128U2R4U6R8U4R4D8R8U4R4U2;R8D6R4U4R4U4;R8D12"); c.paint(200,127,BLACK,BLACK); // 290
+  c.draw("BM56,152U10R7D6R21D8;R32D4BM84,158R30D4L55NU3D3");
+  for(J=92;J<=112;J+=4)c.line(J,152,J,156,BLACK);
+  c.line(69,156,84,158,BLACK,'BF'); c.line(88,148,116,152,BLACK,'BF');
+  c.circle(66,154,2,BLACK); c.circle(78,154,2,BLACK); c.line(66,152,78,152,BLACK);    // 300
+}
+function buildSprites(){                      // 360-370 (PMODE3,5:PCLS — fundo verde)
+  var c=work; c.pcls(GREEN); c.color=3;
+  c.draw("BM192,156M-24,-4M+16,-4R16;E8NM+4,8R40F4G4L36;G8F8R36F4G4L40;NM+4,-8H8L16M-16,-4M+24,-4;BM166,104M+16,-6M+16,-2;M+10,-6NM+2,8M+40,4M+2,4M-2,+4M-38,-4;M-10,6M+10,6M+38,-4M+2,4M-2,4M-40,4NM+2,-8;M-10,-6M-16,-2M-16,-6");
+  c.paint(206,148,3,3); c.paint(220,144,2,3); c.paint(220,168,2,3);                   // 370
+  c.paint(196,104,3,3); c.paint(224,96,2,3); c.paint(224,112,2,3);
+  SPR_A=c.get(166,138,252,174); SPR_C=c.get(166,88,252,120);
+}
+function drawDefusePanel(){                   // 380-400
+  var c=defuse; c.pcls(GREEN);
+  c.color=4; c.line(16,16,124,170,4,'BF');                                            // 380
+  c.color=2; c.x=135;c.y=34;
+  c.draw("C2BM135,34U8ER3F1;D8GL3"); c.line(139,40,139,49,2);
+  c.draw("BM134,55U1E1R4F1D4;M-5,3D2R6BM-6,4R5D3;G1NL3F1D4G1L3;H1U3BM+5,8ND10L1D2;L3D4NR3H1D2R4;BM+1,7L5D4R4F1D4;G1L3H1U2");
+  c.draw("BM+6,8U1H1L4G1D8;F1R3E1U3H1L3;BM-1,9NR6D1R6D4L2;D2L2D3BM-1,8H1U2;E1R3F1D2G1NL3;F1D4G1L3H1U4;BM+0,16D2F1R3E1U8;H1L3G1D2F1R3"); // 390
+  c.line(20,20,120,166,2,'B'); c.paint(68,21,2,2);
+  c.color=4;
+  for(var h=30;h<=156;h+=14)c.line(28,h,112,h,4);                                     // 400
+}
+function eraseAlicate(fio){                   // 80 — COLOR1: LINE(...),PSET,BF
+  defuse.line(166,fio*14+12,252,fio*14+48,GREEN,'BF');
+}
+function putAlicate(fio){ defuse.put(166,fio*14+12,SPR_A); }                          // 410
+function drawConjWarning(){                   // 770-780 — letreiro DRAW no rodapé
+  var c=defuse; c.color=3; c.x=18; c.y=179;
+  c.draw("C3BM18,179U1H1L3G1;D8F1R3E1U1BM+9,1;F1R3E1U8H1L3;G1D8BM+14,1U10F1D3;R3D3R1ND3U7BM+7,7;D2F1R4E1U9NL4;R1BM+9,0D9F1R3E1;U9");
+  c.draw("BM+14,2U1H1L3G1D8F1R3E1;U2L2BM+11,3U9E1R3F1D4NL5D5;BM+10,0L1U1OR2F1R1;F1D6G1BM+14,1L3H1U8E1R3;F1D8BM+9,1U1OR4F1D3;G1L2D1F4");
+}
+
+/* avarias no navio — 110-170 (desenham na página do navio) */
+async function dmg1(){                        // 110 — fumaça no salão de jogos
+  var c=ship;
+  c.line(184,84,192,104,BLACK,'BF'); c.circle(174,92,16,BLACK); c.paint(166,100,BUFF,BUFF);
+  c.color=BLACK; c.draw("C0BM188,104E10H2E8M-2,12G8L6"); c.paint(194,100,BLACK,BLACK);
+  M.render(); return "FUMACA NO SALAO DE JOGOS";
+}
+async function dmg2(){                        // 120-130 — pane na casa das máquinas
+  var c=ship, D2=c.get(63,150,81,158);
+  c.line(63,150,81,158,BLACK,'BF');
+  for(var h=1;h<=6;h++){ c.put(8*h+63,150-4*h,D2); M.render(); await iter(10*20);
+    if(h<6)c.line(8*h+63,150-4*h,8*h+81,158-4*h,BLACK,'BF'); }
+  M.render(); return "PANE NA CASA DAS MAQUINAS";
+}
+async function dmg3(){                        // 140-150 — o navio está afundando
+  var c=ship;
+  c.line(120,160,144,160,BLACK);
+  for(var h=145;h<=159;h++){
+    c.line(141,h,191+159-h,h,BLACK);
+    c.line(130,160,140,168,BLACK,'BF');
+    c.circle(132,160,4,BLACK,1,0,.25); c.circle(140,168,4,BLACK,1,.5,.75);
+    var i=rnd(40)+5;
+    c.line(132-i,h+25,132+i,h+25,BUFF); c.line(140,160,132,168,BUFF);
+    M.render(); await iter(20);
+  }
+  await iter(500); M.render(); return "O NAVIO ESTA' AFUNDANDO";
+}
+async function dmg4(){                        // 160 — há feridos na enfermaria
+  var c=ship;
+  c.line(88,82,104,92,BLACK,'BF');
+  c.color=BLACK; c.draw("C0BM88,90;M+14,6;M+3,-6;M-17,-6;D6"); c.paint(100,92,BLACK,BLACK);
+  M.render(); return "HA FERIDOS NA ENFERMARIA";
+}
+async function dmg5(){                        // 170 — estragos no convés
+  var c=ship;
+  c.line(224,112,184,108,BLACK); c.line(184,108,200,104,BLACK); c.paint(220,108,BUFF,BUFF);
+  M.render(); return "ESTRAGOS NO CONVES";
+}
+var DMG=[null,dmg1,dmg2,dmg3,dmg4,dmg5];
+
+/* ============================================================
+   FLUXO DO JOGO — segue as linhas do .bas
+   ============================================================ */
+var G=null;
+function freshGame(){                          // 260/RUN220 — variáveis novas
+  G={ B:[],NA:[0,3,3,3,3,3], Q:0, ND:0, NE:0, R:0,
+      C:'', CD:'', CE:'', M:['','','','','',''], RS:'NAO',
+      t0:0, fio:9, CF:{}, N:0 };
+  for(var j=0;j<=5;j++){ G.B[j]=[0,0,0,0,0,0]; }
+}
+function elapsed(){ return (performance.now()-G.t0)/1000/SPEED; }
+function timeOut(){ return elapsed()>=300; }   // TIMER>=18000
+function Tmin(){ return elapsed()/60; }        // T=TIMER/3600
+function fmt2(v){ return String(Math.max(0,Math.floor(v))).padStart(2,' '); }
+function bn(v){ return ' '+v+' '; }            // número em PRINT (espaços do BASIC)
+
+function genWiring(){                          // 330-350
+  for(var h=0;h<=5;h++)for(var j=1;j<=3;j+=2){
+    var v; do{ v=rnd(10)-1;
+      var clash=false;
+      for(var i=0;i<h;i++)if(G.B[j][i]===v){clash=true;break;}
+    }while(clash);
+    G.B[j][h]=v; G.B[j+1][h]=v; G.B[5][h]=G.B[3][h];
+  }
+}
+function regen(nb){                            // 800 — renumera a bomba NB
+  for(var f=0;f<=5;f++){ var v;
+    do{ v=rnd(10)-1; var clash=false;
+      for(var i=0;i<f;i++)if(G.B[nb][i]===v){clash=true;break;}
+    }while(clash);
+    G.B[nb][f]=v; }
+}
+
+/* 210 — telegrama de abertura (DATA da linha 190) */
+var TELEGRAM=["TERRORISTA ESPALHOU","BOMBAS VG NAVIO","britania PT",
+  "VOCE VG ESPECIALISTA","FORMADO CURSO","ENGENHARIA BELICA ufrn VG","CONVIDADO MISSAO PT"];
+async function telegram(){
+  M.text(); M.cls();
+  M.printAt(385,'-'.repeat(30));
+  M.printAt(417,'*'); M.printAt(446,'*');
+  for(var p=0;p<7;p++){ var s=TELEGRAM[p];
+    M.printAt(478,'*'); M.printAt(449,'* ');
+    M.cursor=451;
+    for(var h=0;h<s.length;h++){ M.writeStr(s[h]); M.render();
+      play("V29L25501AB"); await sleep(28); }
+    for(h=s.length;h<27;h++)M.putc(451+h,' ',false);
+    M.render(); await sleep(320);
+  }
+  M.printAt(449,'-'.repeat(30));
+  await iter(800);
+}
+
+/* 260-270 — ATENCAO / ESQUEMAS DAS BOMBAS */
+async function atencao(){
+  M.text(); M.cls(0);
+  await sound(200,2); M.printAt(10,"ATENCAO !!!"); await iter(300);
+  await sound(225,4); M.printAt(38,"ESQUEMAS DAS BOMBAS:"); await iter(600);
+  await sound(140,2); M.printAt(107,"<ENTER>");
+  flushKeys(); await waitEnter();
+}
+
+/* 270-310 — navio com praia e dígitos das bombas */
+async function intro(){
+  G.Q=rnd(500);                                // 270 — quantia inicial
+  var intr=new Surf(); intr.buf.set(ship.buf); // PCOPY
+  drawIntroExtras(intr);
+  intr.color=BLACK;
+  for(var h=0;h<=3;h++)intr.draw(NU[h]);       // 310
+  intr.draw("C5"+NU[4]);
+  M.show(intr); await iter(3500);
+  M.show(ship); await iter(1000);
+}
+
+/* 320 — primeira bomba */
+async function askFirst(){
+  for(;;){
+    M.text(); M.cls();
+    M.cursor=0; M.writeStr("DIGA QUAL A BOMBA QUE VOCE      QUER COMECAR");
+    G.phase='askfirst';
+    flushKeys();
+    var n=parseInt(await inputLine(),10)||0;
+    if(n<1||n>5){ M.printAt(197,"NUMERO INEXISTENTE"); await iter(500); continue; }
+    M.print([',',',',' APARTIR DE AGORA VOCE TEM',',',' 5 MIN PARA DESARMAR AS',',',' BOMBAS.']);
+    await iter(1200);
+    return n;
+  }
+}
+
+/* 490-520 — próxima bomba */
+async function askNext(){
+  for(;;){
+    M.text(); M.cls();
+    M.print([" PARABENS, CONTINUE TENTANDO,",',',' MAS ANTES DIGA:']);
+    M.show(ship);                              // 470/480 — pisca o dígito da bomba
+    var P=(G.N===1)?BLACK:BUFF;
+    for(var h=1;h<=5;h++){
+      ship.color=BUFF; ship.draw(NU[5-G.N]); M.render(); await iter(100);
+      ship.color=BLACK; ship.draw("C0"+NU[5-G.N]); M.render(); await iter(100); }
+    ship.color=P; ship.draw((P===BLACK?"C0":"C5")+NU[5-G.N]); M.render(); await iter(300);
+    M.text(); M.cls();
+    M.writeStr(" QUAL A PROXIMA BOMBA");
+    G.phase='ask';
+    flushKeys();
+    var s=(await inputLine()).trim().toUpperCase();
+    if(s==='R'){ await report(true); continue; }                       // GOSUB560
+    if(s==='D'){ var r=await desist('H'); if(r==='END')return 0; continue; } // GOSUB650
+    var n=parseInt(s,10)||0;
+    if(n<1||n>5)continue;                                              // 500
+    if(G.C.indexOf(String(n))>=0){
+      M.print([',',',',' BOMBA JA\' TRABALHADA']); await iter(500);
+      M.show(ship); await iter(900); continue;                         // 500/520 → GOTO480
     }
-    // alicate (sprite A) sobre o fio selecionado — linha 410, aproximado dos fios
-    var H=30+14*state.fio;
-    c.line(112,H,130,H,3);                         // "haste" ligando o alicate ao fio
-    c.put(128, state.fio*14+12, SPR.A, 5);         // fundo (buff) transparente
-    return c;
+    return n;                                                          // → 380
   }
+}
 
-  // digitos 3x5 simples para numerar os fios
-  var FONT={
-    0:["111","101","101","101","111"],1:["010","110","010","010","111"],
-    2:["111","001","111","100","111"],3:["111","001","111","001","111"],
-    4:["101","101","111","001","001"],5:["111","100","111","001","111"],
-    6:["111","100","111","101","111"],7:["111","001","010","010","010"],
-    8:["111","101","111","101","111"],9:["111","101","111","001","111"]};
-  function drawDigit(c,x,y,val,col){ var s=''+val;
-    for(var ci=0;ci<s.length;ci++){ var g=FONT[s[ci]]; if(!g)continue;
-      for(var ry=0;ry<5;ry++)for(var rx=0;rx<3;rx++) if(g[ry][rx]==='1') c.pset(x+ci*4+rx,y+ry,col);
-    } }
-
-  // fonte 5x5 para o título legível do painel
-  var F5={
-    'A':["01110","10001","11111","10001","10001"],'B':["11110","10001","11110","10001","11110"],
-    'M':["10001","11011","10101","10001","10001"],'N':["10001","11001","10101","10011","10001"],
-    'O':["01110","10001","10001","10001","01110"],' ':["00000","00000","00000","00000","00000"],
-    'º':["01100","10010","01100","00000","00000"],
-    '0':["01110","10011","10101","11001","01110"],'1':["00100","01100","00100","00100","01110"],
-    '2':["11110","00001","01110","10000","11111"],'3':["11110","00001","01110","00001","11110"],
-    '4':["00110","01010","10010","11111","00010"],'5':["11111","10000","11110","00001","11110"]};
-  function drawText(c,x,y,s,col,sc){ sc=sc||1;
-    for(var i=0;i<s.length;i++){ var g=F5[s.charAt(i)]||F5[' '];
-      for(var ry=0;ry<5;ry++)for(var rx=0;rx<5;rx++) if(g[ry].charAt(rx)==='1')
-        for(var a=0;a<sc;a++)for(var b=0;b<sc;b++) c.pset(x+(i*6+rx)*sc+a,y+ry*sc+b,col);
-    } }
-
-  // ---- naufrágio (reaproveita o navio, meio afundado, sob ondas) ----
-  function drawSink(){ var c=drawShip();
-    c.color=3; for(var y=150;y<192;y++) for(var x=0;x<256;x++){ if(((x+y)&3)===0) c.pset(x,y,3); }
-    return c; }
-
-  window.BombaGfx={ drawShip:drawShip, drawSink:drawSink, drawDefuse:drawDefuse,
-    reset:function(){SPR=null;} };
-})();
-
-/* =========================================================================
-   Lógica do jogo (fiel à listagem) + integração dos gráficos.
-   ========================================================================= */
-(function(){
-  var TIME_LIMIT=300;                 // 5 min (TIMER>=18000)
-  var REWARD_NEUTRAL=35;              // Q+35   (linha 440)
-  var REWARD_ACTIVE=200;              // Q+200  (linha 450)
-  var DISARM_BONUS={1:4000,2:7000,3:10000,4:3000,5:3000};   // linha 450
-  var EXPLODE_PENALTY={1:497,2:321,3:109,4:755,5:755};      // linha 670
-  var DAMAGE={1:"FUMAÇA NO SALÃO DE JOGOS",2:"PANE NA CASA DAS MÁQUINAS",
-    3:"O NAVIO ESTÁ AFUNDANDO",4:"HÁ FERIDOS NA ENFERMARIA",5:"ESTRAGOS NO CONVÉS"};
-
-  var G=null, timerHandle=null;
-
-  function groupOf(n){ return n<=2?"A":"B"; }
-  function membersOf(g){ return g==="A"?[1,2]:[3,4,5]; }
-
-  // 6 posições especiais distintas (B(n,0..2)=ativos, 3-4=armadilha, 5=conjugador)
-  function makeLayout(){
-    var pos=[0,1,2,3,4,5,6,7,8,9];
-    for(var i=pos.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pos[i];pos[i]=pos[j];pos[j]=t;}
-    return {actives:[pos[0],pos[1],pos[2]], traps:[pos[3],pos[4]], conj:pos[5]};
+/* 560-590 — relatório */
+async function report(waitKey){
+  M.text(); M.cls();
+  G.R++;
+  M.printAt(9,"RELATORIO N"+bn(G.R));
+  M.cursor=64;
+  M.print([" TEMPO:"]);
+  M.print([" BOMBAS DESARMADAS: "+G.CD]);
+  M.print([" BOMBAS EXPLODIDAS: "+G.CE]);
+  M.print([" QUANTIA DISPONIVEL: "+G.Q]);
+  M.print([" SUBORNO - "+G.RS]);
+  M.newline();
+  M.print([" OBSERVACOES:"]);
+  for(var i=1;i<=5;i++)M.print(["  *"+G.M[i]]);
+  if(!waitKey){                                // Q$="F" (do naufrágio): sem espera
+    var t=G.Tfinal;
+    M.printAt(71,fmt2(Math.floor(t))+" MIN E "+fmt2((t-Math.floor(t))*60)+" SEG");
+    return;
   }
+  M.newline(); M.cursor+=11; M.writeStr("<ENTER>"); M.render();   // 580 TAB(11)
+  flushKeys();
+  for(;;){                                     // 590 — atualiza o tempo ao vivo
+    if(Tmin()>=5)return;
+    var t=Tmin();
+    M.printAt(71,fmt2(Math.floor(t))+" MIN E "+fmt2((t-Math.floor(t))*60)+" SEG");
+    var k=getKey(); if(k==='ENTER'){ M.cls(); return; }
+    await sleep(120);
+  }
+}
 
-  function newGame(){
-    if(timerHandle){clearInterval(timerHandle);timerHandle=null;}
-    if(window.BombaGfx) BombaGfx.reset();
-    var layA=makeLayout(), layB=makeLayout(), bombs={};
-    for(var n=1;n<=5;n++){
-      bombs[n]={ n:n, group:groupOf(n), layout: groupOf(n)==="A"?layA:layB,
-        conjugated:true, status:"intact", cut:{}, cutX:{}, activesCut:0, revealed:null };
+/* 600-640 — informante / suborno */
+async function bribe(){
+  M.text(); M.cls();
+  if(G.RS==='SIM'){
+    M.print([',',',',' SUBORNO JA\' UTILIZADO']); await iter(800); return;
+  }
+  var QP=rnd(Math.max(1,Math.floor(G.Q)))*1.5+10;   // QP=RND(Q)*1.5+10
+  M.printAt(417,"QUANTIA DISPONIVEL:"+bn(G.Q));
+  M.printAt(33,"O INFORMANTE PERGUNTA:");
+  var QO;
+  for(;;){
+    M.cursor=96; M.writeStr(" QUANTIA OFERECIDA");
+    flushKeys();
+    QO=parseInt(await inputLine(),10)||0;
+    if(QO>G.Q){ M.print([',',',',' NAO DEVE SER MAIS DO QUE'+bn(G.Q)]); continue; }
+    break;
+  }
+  if(QO<QP){                                   // 610 — recusa (e perde a quantia!)
+    M.print([',',',',' O INFORMANTE NAO ACEITA',',',' VOCE PERDEU U$'+bn(QO)]);
+    await iter(800);
+  } else {                                     // 620 — aceita
+    M.print([',',',',' O INFORMANTE ACEITA E DIZ QUE']);
+    var fio=G.B[G.N][rnd(2)+2];                // B(N,RND(2)+2) — posição 3 ou 4 = armadilha
+    M.print([',',' O FIO'+bn(fio)+"E' UM FIO ARMADILHA"]);
+    G.RS='SIM';
+    for(var h=0;h<1000;h++){ if(getKey())break; await sleep(1); }
+  }
+  G.Q-=QO;                                     // 630 — debita nos dois casos
+}
+
+/* 650-660 — desistir; retorna 'END' se confirmou */
+async function desist(qs){
+  M.text(); M.cls();
+  M.print([',',',',' VOCE QUER MESMO DESISTIR? (S/N)']);
+  flushKeys();
+  for(;;){
+    if(timeOut())return 'TIMEOUT';
+    var k=getKey();
+    if(k==='N')return 'NO';
+    if(k==='S'){
+      var t=Tmin();
+      M.print([',',',',' QUE PENA, FALTAVAM APENAS',bn(5-(G.NE+G.ND))+'BOMBAS',',',
+        ' SEU TEMPO ERA DE: '+fmt2(Math.floor(t))+' MIN E '+fmt2((t-Math.floor(t))*60)+' SEG']);
+      return 'END';
     }
-    G={ bombs:bombs, money:0, disarmed:[], exploded:[], worked:{}, bribeUsed:false,
-      reports:0, damage:{}, current:null, cursor:9, timeLeft:TIME_LIMIT,
-      started:false, finished:false, _bribeThreshold:0 };
+    await sleep(30);
   }
+}
 
-  function show(id){ var s=document.querySelectorAll(".screen");
-    for(var i=0;i<s.length;i++)s[i].classList.remove("active");
-    document.getElementById(id).classList.add("active"); }
-  function $(id){return document.getElementById(id);}
+/* 670-700 — explosão; retorna 'SINK' | 'NEXT' */
+async function explode(){
+  var N=G.N;
+  G.NE++; G.CE+=String(N); G.C+=String(N);
+  G.Q-=[0,497,321,109,755,755][N];             // 670
+  M.show(ship);
+  for(var h=1;h<=20;h++){                      // pisca SCREEN 1,S + PLAY"O1;L60;V31;C"
+    M.colorset=(h%2)?0:1; M.render();
+    play("O1L60V31C");
+    await sleep(h*4);
+  }
+  M.colorset=1;
+  var P=(N===1)?"C0":"C5";                     // 680
+  ship.color=(N===1)?BLACK:BUFF; ship.draw(P+NU[5-N]);
+  M.render();
+  G.M[N]=await DMG[N]();                       // avaria + mensagem ZY$
+  await iter(3500);
+  if(N===3)return 'SINK';
+  if(N===2)G.Q-=21; else if(N===1)G.Q-=66; else G.Q-=1;
+  if(G.CE.indexOf('2')>=0&&G.NE===2)return 'SINK';   // 690
+  if(G.NE<3){                                  // 700
+    M.text(); M.cls();
+    M.print([',',',',' VOCE NAO CONSEGUIU DESARMAR',',',' A BOMBA'+bn(N)+'ELA EXPLODIU.',',',
+      ' CAUSANDO DANOS AO NAVIO...']);
+    await iter(1200); M.cls();
+    return 'NEXT';
+  }
+  return 'SINK';
+}
 
-  function updateHud(){ $("hud").style.display="flex";
-    var m=Math.max(0,Math.floor(G.timeLeft/60)), s=Math.max(0,G.timeLeft%60);
-    var el=$("hudTime"); el.textContent=m+":"+(s<10?"0":"")+s;
-    el.className="t"+(G.timeLeft<=30?" low":"");
-    $("hudMoney").textContent=Math.round(G.money);
-    $("hudDis").textContent=G.disarmed.length; $("hudExp").textContent=G.exploded.length; }
+/* 710-760 — naufrágio */
+async function sinkScreen(){
+  G.phase='sink';
+  G.M[3]="O NAVIO ESTA AFUNDANDO";
+  G.Tfinal=Tmin();
+  M.text(); M.cls();
+  M.printAt(1,'*'.repeat(30));
+  M.printAt(43,"URGENTE !!");
+  M.printAt(33,'*'); M.printAt(62,'*');
+  M.printAt(65,'*'.repeat(30));
+  M.cursor=96;
+  M.print([',',',',' NAUFRAGA RECENTEMENTE O']);
+  M.print(['TRANSATLANTICO \'BRITANIA\'']);
+  M.print(['PESANDO'+bn(100+rnd(500))+'TONELADAS']);
+  M.print([',',' DEVIDO A ACAO DE TERRORISTAS']);
+  M.print([',',' BUSCAS JA\' ESTAO SENDO FEI-',',',' TAS NO LOCAL,',',',' ATE\' AGORA',',',
+    ' NAO HA SOBREVIVENTES...']);
+  await iter(3000);
+  await report(false);                          // GOSUB560 com Q$="F"
+  await play("O2;V31;L6;D;P20;D;P20;L20;D;P70;L4;D;P15");                       // 740
+  await play("L6;F;P20;L20;E;P70;L6;E;P20;L20;D;P70;L6;D;L20;P20;C#;P70;L4;D"); // 750
+}
 
-  function startTimer(){ if(timerHandle)clearInterval(timerHandle);
-    timerHandle=setInterval(function(){ if(G.finished)return;
-      G.timeLeft--; updateHud();
-      if(G.timeLeft<=0){ clearInterval(timerHandle); timerHandle=null;
-        sink("O TEMPO ACABOU E AINDA HAVIA BOMBAS A BORDO."); } },1000); }
+/* 530-550 — vitória */
+async function winScreen(){
+  G.phase='win';
+  var t=G.Tfinal;
+  if(G.ND===5)G.Q+=64000+rnd(12000); else G.Q+=19000+rnd(2000);  // 530
+  M.text(); M.cls();
+  M.printAt(10,"PARABENS !!!");
+  M.cursor=64;
+  M.print([',',',',' VOCE CONSEGUIU SALVAR O']);
+  M.print(['BRITANIA DO NAUFRAGIO EM,']);
+  M.print([fmt2(Math.floor(t))+' MIN E '+fmt2((t-Math.floor(t))*60)+' SEG, SENDO CHAMADO']);
+  M.print([' PARA TRABALHAR NO SERVICO']);
+  M.print([' DE SEGURANCA NACIONAL.']);
+  M.newline();
+  M.print([' BOMBAS DESARMADAS '+G.CD]);
+  M.print([' BOMBAS EXPLODIDAS '+G.CE]);
+  M.print([' QUANTIA DISPONIVEL U$'+bn(G.Q)]);
+}
 
-  function beginGame(){ newGame(); G.started=true; updateHud(); startTimer(); gotoSelect(); }
+/* 380-440 — rodada de desarme; retorna 'WIN'|'SINK'|'END' */
+async function playRound(){
+  drawDefusePanel(); G.fio=9; G.CF={};
+  putAlicate(G.fio); M.show(defuse);
+  G.phase='defuse';
+  flushKeys();
+  for(;;){
+    if(timeOut())return 'SINK';                // 420 TIMER>=18000
+    var k=getKey();
+    if(!k){ await sleep(16); continue; }
+    if(k==='ArrowUp'||k==='ArrowDown'){        // 420/80/90
+      eraseAlicate(G.fio);
+      G.fio+=(k==='ArrowDown')?1:-1;
+      if(G.fio===10)G.fio=0; if(G.fio===-1)G.fio=9;
+      putAlicate(G.fio); M.render(); continue;
+    }
+    if(k==='R'){ await report(true); M.show(defuse); flushKeys(); continue; }
+    if(k==='S'){ await bribe(); M.show(defuse); flushKeys(); continue; }   // 640 → 420
+    if(k==='D'){ var r=await desist('');
+      if(r==='END')return 'END';
+      if(r==='TIMEOUT')return 'SINK';
+      M.show(defuse); flushKeys(); continue; }
+    if(k!=='ArrowLeft')continue;               // CHR$(8)
+    if(G.CF[G.fio])continue;                   // 430 — fio já cortado
+    defuse.put(166,G.fio*14+12,SPR_C);         // alicate "fecha"
+    var D=rnd(64)+32;                          // cacho amarelo sobre o fio
+    defuse.line(D,G.fio*14+30,D+12,G.fio*14+30,2);
+    defuse.circle(D,G.fio*14+36,8,2,4/8,.75,1.75);
+    defuse.circle(D+12,G.fio*14+24,8,2,4/8,.75,1.5);
+    M.render(); await sleep(90);
+    G.CF[G.fio]=true;                          // 440
+    eraseAlicate(G.fio); putAlicate(G.fio); M.render();
+    var NF=-1;
+    for(var f=0;f<=5;f++)if(G.B[G.N][f]===G.fio){NF=f;break;}
+    if(NF<0){ G.Q+=35; continue; }             // fio neutro
+    if(NF<=2){                                 // 450 — fio ativo
+      G.Q+=200; G.NA[G.N]--;
+      if(G.NA[G.N]>0)continue;
+      G.Q+=[0,4000,7000,10000,3000,3000][G.N];
+      G.Q+=rnd(500); G.C+=String(G.N); G.CD+=String(G.N); G.ND++;   // 460
+      if(timeOut())return 'SINK';
+      if(G.ND+G.NE===5){ G.Tfinal=Tmin(); return 'WIN'; }
+      M.text(); M.cls();
+      M.print([',',',',' VOCE CONSEGUIU DESARMAR',',',',',' A BOMBA'+bn(G.N)]);
+      await iter(500); M.cls();
+      var nx=await askNext(); if(nx===0)return 'END';
+      G.N=nx;
+      drawDefusePanel(); G.fio=9; G.CF={};
+      putAlicate(G.fio); M.show(defuse); G.phase='defuse'; flushKeys();
+      continue;
+    }
+    if(NF<=4){                                 // 670 — fio armadilha
+      var res=await explode();
+      if(res==='SINK')return 'SINK';
+      var nx2=await askNext(); if(nx2===0)return 'END';
+      G.N=nx2;
+      drawDefusePanel(); G.fio=9; G.CF={};
+      putAlicate(G.fio); M.show(defuse); G.phase='defuse'; flushKeys();
+      continue;
+    }
+    /* NF=5 — 770-820: fio conjugador */
+    drawConjWarning(); M.render();
+    G.Q+=7;                                    // 790
+    var NB=[0,2,1,4,3,3][G.N];
+    regen(NB);                                 // 800
+    if(G.N>=3){                                // 810
+      if(G.N!==5){ for(f=0;f<=5;f++)G.B[5][f]=G.B[NB][f]; }
+      else { for(f=0;f<=5;f++)G.B[4][f]=G.B[3][f]; }
+    }
+  }
+}
 
-  function gotoSelect(){ G.current=null; var grid=$("bombGrid"); grid.innerHTML="";
-    for(var n=1;n<=5;n++){ (function(n){ var b=G.bombs[n];
-      var card=document.createElement("div"); card.className="bombcard"; var st="INTACTA";
-      if(b.status==="disarmed"){card.classList.add("done","disarmed");st="DESARMADA";}
-      else if(b.status==="exploded"){card.classList.add("done","exploded");st="EXPLODIU";}
-      card.innerHTML='<div class="num">'+n+'</div><div class="st">'+st+'</div>';
-      if(b.status==="intact")card.addEventListener("click",function(){chooseBomb(n);});
-      else card.classList.add("done");
-      grid.appendChild(card); })(n); }
-    $("selectHint").textContent="Clique numa bomba intacta (ou tecle 1-5).";
-    show("select"); }
+/* 830-860 — <ENTER> / OUTRA (S/N)? */
+async function enterOutra(){
+  G.phase='outra';
+  M.printAt(460,"<ENTER>");
+  flushKeys(); await waitEnter();
+  M.cls();
+  M.printAt(234,"OUTRA (S/N)?");
+  flushKeys();
+  for(;;){ var k=await inkey();
+    if(k==='N')return false;
+    if(k==='S'){ M.print([',',',',' ESPERE UM MOMENTO.']); await iter(600); return true; } }
+}
 
-  function chooseBomb(n){ var b=G.bombs[n]; if(!b||b.status!=="intact")return;
-    G.current=n; G.worked[n]=true; G.cursor=9; renderPanel(); show("defuse");
-    setMsg("Trabalhando na bomba nº "+n+". Mova o alicate (↑/↓) e corte com ←.","info"); }
+/* laço principal (RUN / RUN220) */
+async function main(){
+  await telegram();                            // 210 (só na primeira vez, como no RUN220)
+  for(;;){
+    freshGame();
+    buildShip();                               // 220-250
+    await atencao();                           // 260
+    await intro();                             // 270-310
+    G.N=await askFirst();                      // 320
+    genWiring();                               // 330-350
+    buildSprites();                            // 360-370
+    G.t0=performance.now();                    // TIMER=0
+    var res=await playRound();
+    if(res==='WIN')await winScreen();
+    else if(res==='SINK')await sinkScreen();
+    /* 'END' (desistiu): a tela QUE PENA já está posta */
+    if(!await enterOutra()){                   // 850 — N: END
+      M.cls(); M.printAt(0,"OK"); return;
+    }
+  }
+}
 
-  function wireType(b,pos){ var L=b.layout;
-    if(L.actives.indexOf(pos)>=0)return "active";
-    if(L.traps.indexOf(pos)>=0)return "trap";
-    if(L.conj===pos)return "conj"; return "neutral"; }
+/* liga o Color 64 (gesto do usuário inicializa o áudio) */
+document.getElementById('power').addEventListener('click',function(){
+  this.classList.add('off');
+  audioInit();
+  M.render();
+  main();
+});
+M.render();
 
-  function renderPanel(){ var b=G.bombs[G.current];
-    var state={ fio:G.cursor, revealed:b.revealed, bombN:G.current, cut:{} };
-    for(var k=0;k<10;k++){ if(b.cut[k]) state.cut[k]={d:b.cutX[k]}; }
-    var c=BombaGfx.drawDefuse(state); c.render($("bombCanvas")); }
-
-  function setMsg(t,cls){ var m=$("msg"); m.className="msg "+(cls||"info"); m.textContent=t; }
-
-  function moveCursor(d){ if(G.current==null)return; G.cursor+=d;
-    if(G.cursor>9)G.cursor=0; if(G.cursor<0)G.cursor=9; renderPanel(); }
-
-  function cutWire(){ if(G.current==null)return; var b=G.bombs[G.current], p=G.cursor;
-    if(b.cut[p]){ setMsg("Esse fio já foi cortado.","info"); return; }
-    b.cut[p]=true; b.cutX[p]=Math.floor(Math.random()*64)+32;   // D=RND(64)+32 (linha 430)
-    var type=wireType(b,p);
-    if(type==="trap"){ renderPanel(); explodeBomb(G.current); return; }
-    if(type==="active"){ G.money+=REWARD_ACTIVE; b.activesCut++; renderPanel(); updateHud();
-      if(b.activesCut>=3) disarmBomb(G.current);
-      else setMsg("Fio cortado. A bomba continua armada.","info"); return; }
-    if(type==="conj"){ cutConjugator(b); renderPanel();
-      setMsg("FIO CONJUGADOR CORTADO! As outras bombas do grupo "+b.group+" foram renumeradas.","info"); return; }
-    G.money+=REWARD_NEUTRAL; renderPanel(); updateHud();
-    setMsg("Fio cortado. A bomba continua armada.","info"); }
-
-  function cutConjugator(b){ b.conjugated=false;
-    b.layout={actives:b.layout.actives.slice(),traps:b.layout.traps.slice(),conj:b.layout.conj};
-    var sibs=membersOf(b.group).filter(function(x){ var ob=G.bombs[x];
-      return x!==b.n && ob.conjugated && ob.status==="intact"; });
-    if(sibs.length){ var nl=makeLayout(); sibs.forEach(function(x){ G.bombs[x].layout=nl; }); } }
-
-  function disarmBomb(n){ var b=G.bombs[n]; b.status="disarmed"; G.disarmed.push(n);
-    G.money+=DISARM_BONUS[n]; updateHud();
-    if(G.disarmed.length+G.exploded.length>=5){ winGame(); return; }
-    flashThen("good","BOMBA Nº "+n+" DESARMADA! Parabéns, continue tentando.",gotoSelect); }
-
-  function explodeBomb(n){ var b=G.bombs[n]; b.status="exploded"; G.exploded.push(n);
-    G.money-=EXPLODE_PENALTY[n]; if(G.money<0)G.money=0; G.damage[n]=DAMAGE[n]; updateHud();
-    var crt=$("crt"); crt.classList.remove("flash-danger"); void crt.offsetWidth; crt.classList.add("flash-danger");
-    if(n===3){ sink("A BOMBA Nº 3 EXPLODIU."); return; }
-    if(G.exploded.indexOf(2)>=0 && G.exploded.length===2){ sink("A BOMBA Nº 2 E OUTRA EXPLODIRAM."); return; }
-    if(G.exploded.length>=3){ sink("TRÊS BOMBAS EXPLODIRAM."); return; }
-    if(G.disarmed.length+G.exploded.length>=5){ winGame(); return; }
-    flashThen("alert","VOCÊ NÃO CONSEGUIU DESARMAR A BOMBA Nº "+n+". ELA EXPLODIU! "+DAMAGE[n]+".",gotoSelect); }
-
-  function flashThen(cls,text,next){ setMsg(text,cls); show("defuse");
-    setTimeout(function(){ if(!G.finished)next(); },1700); }
-
-  function openBribe(){ if(G.current==null)return;
-    if(G.bribeUsed){ setMsg("SUBORNO JÁ UTILIZADO. O informante cortou contato.","info"); return; }
-    G._bribeThreshold=Math.floor(Math.random()*G.money*1.5)+10;    // QP=RND(Q)*1.5+10
-    $("bribeText").innerHTML="QUANTIA DISPONÍVEL: $"+Math.round(G.money)+"<br>O INFORMANTE PERGUNTA:<br><b>quanto você oferece?</b>";
-    $("bribeInput").value=""; $("bribeModal").classList.add("active");
-    setTimeout(function(){$("bribeInput").focus();},50); }
-  function offerBribe(){ var qo=parseInt($("bribeInput").value,10);
-    if(isNaN(qo)||qo<0){ $("bribeText").innerHTML="Digite um valor válido."; return; }
-    if(qo>G.money){ $("bribeText").innerHTML="NÃO DEVE SER MAIS DO QUE $"+Math.round(G.money)+".<br>Ofereça novamente."; return; }
-    if(qo<G._bribeThreshold){ $("bribeModal").classList.remove("active");
-      setMsg("O INFORMANTE NÃO ACEITOU. Você pode tentar de novo (S).","info"); return; }
-    G.money-=qo; G.bribeUsed=true; var b=G.bombs[G.current];
-    var trap=b.layout.traps[Math.floor(Math.random()*2)]; b.revealed=trap;
-    $("bribeModal").classList.remove("active"); updateHud(); renderPanel();
-    setMsg("O INFORMANTE ACEITA E DIZ QUE O FIO Nº "+(trap+1)+" É UM FIO-ARMADILHA.","info"); }
-
-  function openReport(){ G.reports++;
-    var m=Math.floor((TIME_LIMIT-G.timeLeft)/60), s=(TIME_LIMIT-G.timeLeft)%60, obs="";
-    for(var i=1;i<=5;i++){ if(G.damage[i])obs+="<li>"+G.damage[i]+"</li>"; }
-    if(!obs)obs="<li class='muted'>nenhuma avaria registrada</li>";
-    $("reportBody").innerHTML="<h3>RELATÓRIO Nº "+G.reports+"</h3>"+
-      "<div class='row'><span>TEMPO DECORRIDO</span><span>"+m+" MIN "+(s<10?"0":"")+s+" SEG</span></div>"+
-      "<div class='row'><span>BOMBAS DESARMADAS</span><span>"+(G.disarmed.join(" ")||"—")+"</span></div>"+
-      "<div class='row'><span>BOMBAS EXPLODIDAS</span><span>"+(G.exploded.join(" ")||"—")+"</span></div>"+
-      "<div class='row'><span>QUANTIA DISPONÍVEL</span><span>$"+Math.round(G.money)+"</span></div>"+
-      "<div class='row'><span>SUBORNO</span><span>"+(G.bribeUsed?"SIM":"NÃO")+"</span></div>"+
-      "<div style='margin-top:8px'>OBSERVAÇÕES:</div><ul>"+obs+"</ul>";
-    show("reportScreen"); }
-
-  function winGame(){ finishGame(); var allDisarmed=G.disarmed.length===5;
-    G.money+= allDisarmed?(64000+Math.floor(Math.random()*12000)):(19000+Math.floor(Math.random()*2000));
-    var m=Math.floor((TIME_LIMIT-G.timeLeft)/60), s=(TIME_LIMIT-G.timeLeft)%60;
-    var cv=$("overCanvas"); cv.style.display="block"; BombaGfx.drawShip().render(cv,0,60,256,110);
-    $("overText").innerHTML="<p class='big' style='color:var(--ink)'>PARABÉNS !!!</p>"+
-      "<p class='lead'>Você conseguiu salvar a <b>Britânia</b> do naufrágio em "+m+" min "+s+" seg"+
-      (allDisarmed?", desarmando <b>todas</b> as bombas":"")+"!</p>"+
-      "<p class='lead'>Está sendo chamado para trabalhar no serviço de segurança nacional.</p>"+
-      "<p class='lead' style='color:var(--warn)'>QUANTIA FINAL: $"+Math.round(G.money)+"</p>";
-    updateHud(); show("over"); }
-
-  function sink(reason){ finishGame();
-    var m=Math.floor((TIME_LIMIT-G.timeLeft)/60), s=(TIME_LIMIT-G.timeLeft)%60;
-    var cv=$("overCanvas"); cv.style.display="block"; BombaGfx.drawSink().render(cv,0,50,256,120);
-    $("overText").innerHTML="<p class='big' style='color:var(--danger)'>O NAVIO AFUNDOU</p>"+
-      "<p class='lead'>"+reason+"</p>"+
-      "<p class='lead muted'>Naufraga recentemente o transatlântico 'Britânia', pesando "+
-        (100+Math.floor(Math.random()*500))+" toneladas, devido à ação de terroristas. "+
-        "Buscas já estão sendo feitas no local; até agora não há sobreviventes...</p>"+
-      "<p class='lead'>Tempo decorrido: "+m+" min "+s+" seg &middot; Quantia: $"+Math.round(G.money)+"</p>";
-    show("over"); }
-
-  function giveUp(){ finishGame(); var rest=5-(G.disarmed.length+G.exploded.length);
-    var m=Math.floor((TIME_LIMIT-G.timeLeft)/60), s=(TIME_LIMIT-G.timeLeft)%60;
-    $("overCanvas").style.display="none";
-    $("overText").innerHTML="<p class='big' style='color:var(--warn)'>QUE PENA...</p>"+
-      "<p class='lead'>Faltavam apenas <b>"+rest+"</b> bomba(s). Seu tempo era de "+m+" min "+s+" seg.</p>"+
-      "<p class='lead muted'>Quantia: $"+Math.round(G.money)+"</p>"; show("over"); }
-
-  function finishGame(){ G.finished=true; if(timerHandle){clearInterval(timerHandle);timerHandle=null;} }
-
-  // ---- teclado ----
-  document.addEventListener("keydown",function(e){
-    var active=document.querySelector(".screen.active"), id=active?active.id:"";
-    if(id==="title"){ if(e.key==="Enter"){e.preventDefault();beginGame();} return; }
-    if(id==="over"){ if(e.key.toLowerCase()==="s"){e.preventDefault();beginGame();}
-      if(e.key.toLowerCase()==="n"){e.preventDefault();show("title");$("hud").style.display="none";} return; }
-    if(id==="reportScreen"){ if(e.key==="Enter"){e.preventDefault();show("defuse");} return; }
-    if(id==="select"){ if(e.key>="1"&&e.key<="5"){e.preventDefault();chooseBomb(parseInt(e.key,10));} return; }
-    if(id==="defuse"){
-      if($("bribeModal").classList.contains("active")||$("quitModal").classList.contains("active"))return;
-      switch(e.key){
-        case "ArrowUp": e.preventDefault(); moveCursor(-1); break;
-        case "ArrowDown": e.preventDefault(); moveCursor(1); break;
-        case "ArrowLeft": e.preventDefault(); cutWire(); break;
-        default: var k=e.key.toLowerCase();
-          if(k==="r"){e.preventDefault();openReport();}
-          else if(k==="s"){e.preventDefault();openBribe();}
-          else if(k==="d"){e.preventDefault();$("quitModal").classList.add("active");}
-      } return; }
-  });
-
-  // clique no canvas seleciona o fio (linha y -> índice)
-  function canvasWire(ev){ var cv=$("bombCanvas"), r=cv.getBoundingClientRect();
-    var yy=(ev.clientY-r.top)/r.height*192, k=Math.round((yy-30)/14);
-    if(k<0)k=0; if(k>9)k=9; return k; }
-
-  // ---- botões ----
-  $("startBtn").addEventListener("click",beginGame);
-  $("helpBtn").addEventListener("click",function(){show("help");});
-  $("helpBack").addEventListener("click",function(){show("title");});
-  $("reportBack").addEventListener("click",function(){show("defuse");});
-  $("againBtn").addEventListener("click",beginGame);
-  $("bribeOffer").addEventListener("click",offerBribe);
-  $("bribeCancel").addEventListener("click",function(){$("bribeModal").classList.remove("active");});
-  $("bribeInput").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();offerBribe();}});
-  $("quitYes").addEventListener("click",function(){$("quitModal").classList.remove("active");giveUp();});
-  $("quitNo").addEventListener("click",function(){$("quitModal").classList.remove("active");});
-  $("bombCanvas").addEventListener("click",function(ev){ if(G&&G.current!=null){ G.cursor=canvasWire(ev); renderPanel(); }});
-  document.querySelectorAll('#defuse .btn[data-act]').forEach(function(btn){
-    btn.addEventListener("click",function(){ var a=btn.getAttribute("data-act");
-      if(a==="report")openReport(); else if(a==="bribe")openBribe();
-      else if(a==="quit")$("quitModal").classList.add("active"); }); });
-
-  // navio na tela de título
-  window.addEventListener("DOMContentLoaded",function(){
-    try{ BombaGfx.drawShip().render($("shipCanvas"),0,60,256,110); }catch(e){}
-  });
-})();
+/* estado exposto para testes automatizados */
+window.BOMBA=function(){ return G; };
 </script>
 </body>
 </html>
