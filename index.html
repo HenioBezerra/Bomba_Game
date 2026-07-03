@@ -488,8 +488,8 @@ async function askFirst(){
     G.phase='askfirst';
     flushKeys();
     var n=parseInt(await inputLine(),10)||0;
-    if(n<1||n>5){ M.printAt(197,"NUMERO INEXISTENTE"); await iter(500); continue; }
-    M.print([',',',',' APARTIR DE AGORA VOCE TEM',',',' 5 MIN PARA DESARMAR AS',',',' BOMBAS.']);
+    if(n<1||n>5){ M.printAt(197,"NUMERO INEXISTENTE"); await iter(400); continue; }
+    M.print([',',',','   APARTIR DE AGORA VOCE TEM',',','  5 MIN PARA DESARMAR AS',',','  BOMBAS.']);
     await iter(1200);
     return n;
   }
@@ -537,7 +537,7 @@ async function report(waitKey){
   M.print([" SUBORNO - "+G.RS]);
   M.newline();
   M.print([" OBSERVACOES:"]);
-  for(var i=1;i<=5;i++)M.print(["  *"+G.M[i]]);
+  for(var i=1;i<=5;i++)M.print(["   *"+G.M[i]]);
   if(!waitKey){                                // Q$="F" (do naufrágio): sem espera
     var t=G.Tfinal;
     M.printAt(71,fmt2(Math.floor(t))+" MIN E "+fmt2((t-Math.floor(t))*60)+" SEG");
@@ -568,7 +568,7 @@ async function bribe(){
     M.cursor=96; M.writeStr(" QUANTIA OFERECIDA");
     flushKeys();
     QO=parseInt(await inputLine(),10)||0;
-    if(QO>G.Q){ M.print([',',',',' NAO DEVE SER MAIS DO QUE'+bn(G.Q)]); continue; }
+    if(QO>G.Q){ M.print([',',',','NAO DEVE SER MAIS DO QUE'+bn(G.Q)]); continue; }
     break;
   }
   if(QO<QP){                                   // 610 — recusa (e perde a quantia!)
@@ -625,7 +625,7 @@ async function explode(){
   if(G.CE.indexOf('2')>=0&&G.NE>=2)return 'SINK';    // 690
   if(G.NE<3){                                  // 700
     M.text(); M.cls();
-    M.print([',',',',' VOCE NAO CONSEGUIU DESARMAR',',',' A BOMBA'+bn(N)+'ELA EXPLODIU.',',',
+    M.print([',',',',' VOCE NAO CONSEGUIU DESARMAR',',',' A BOMBA'+bn(N)+'ELA EXPLODIU,',',',
       ' CAUSANDO DANOS AO NAVIO...']);
     await iter(1200); M.cls();
     return 'NEXT';
@@ -644,12 +644,12 @@ async function sinkScreen(){
   M.printAt(33,'*'); M.printAt(62,'*');
   M.printAt(65,'*'.repeat(30));
   M.cursor=96;
-  M.print([',',',',' NAUFRAGA RECENTEMENTE O']);
-  M.print(['TRANSATLANTICO \'BRITANIA\'']);
-  M.print(['PESANDO'+bn(100+rnd(500))+'TONELADAS']);
-  M.print([',',' DEVIDO A ACAO DE TERRORISTAS']);
-  M.print([',',' BUSCAS JA\' ESTAO SENDO FEI-',',',' TAS NO LOCAL,',',',' ATE\' AGORA',',',
-    ' NAO HA SOBREVIVENTES...']);
+  M.print([',',',','    NAUFRAGA RECENTEMENTE O']);
+  M.print([' TRANSATLANTICO \'BRITANIA\'']);
+  M.print([' PESANDO'+bn(100+rnd(500))+'TONELADAS,']);
+  M.print([' DEVIDO A ACAO DE TERRORISTAS']);
+  M.print([',',',',' BUSCAS JA\' ESTAO SENDO FEI-',',',' TAS NO LOCAL,',',',' ATE\' AGORA',',',
+    '   NAO HA\' SOBREVIVENTES...']);
   await iter(3000);
   await report(false);                          // GOSUB560 com Q$="F"
   await play("O2;V31;L6;D;P20;D;P20;L20;D;P70;L4;D;P15");                       // 740
@@ -662,13 +662,13 @@ async function winScreen(){
   var t=G.Tfinal;
   if(G.ND===5)G.Q+=64000+rnd(12000); else G.Q+=19000+rnd(2000);  // 530
   M.text(); M.cls();
-  M.printAt(10,"PARABENS !!");
+  M.printAt(10,"PARABENS !!!");
   M.cursor=64;
-  M.print([',',',',' VOCE CONSEGUIU SALVAR O']);
+  M.print([',',',','    VOCE CONSEGUIU SALVAR O']);
   M.print(['BRITANIA DO NAUFRAGIO EM,']);
   M.print([fmt2(Math.floor(t))+' MIN E '+fmt2((t-Math.floor(t))*60)+' SEG, SENDO CHAMADO']);
   M.print([' PARA TRABALHAR NO SERVICO']);
-  M.print([' DE SEGURANCA NACIONAL.']);
+  M.print(['DE SEGURANCA NACIONAL.']);
   M.newline();
   M.print([' BOMBAS DESARMADAS '+G.CD]);
   M.print([' BOMBAS EXPLODIDAS '+G.CE]);
